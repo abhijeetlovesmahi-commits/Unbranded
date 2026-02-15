@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Portal | The Lalit</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore-compat.js"></script>
+    <style>
+        .student-profile-header {
+            background: var(--primary-color); color: var(--accent-color);
+            padding: 30px; border-radius: 12px; display: flex; align-items: center; gap: 20px;
+            margin-bottom: 30px; border-bottom: 5px solid var(--accent-color);
+        }
+        .st-photo-large {
+            width: 100px; height: 100px; border-radius: 50%; border: 3px solid var(--accent-color);
+            object-fit: cover; background: white;
+        }
+        .info-card { text-align: center; padding: 20px; border-top: 4px solid var(--primary-color); }
+        .fee-status-paid { color: var(--success); font-weight: bold; }
+        .fee-status-pending { color: var(--danger); font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="main-content">
+    <div class="student-profile-header" id="profileHeader">
+        <img id="sPhoto" src="https://via.placeholder.com/100" class="st-photo-large">
+        <div>
+            <h1 id="sName" style="margin:0; font-family:'Cinzel';">Loading...</h1>
+            <p id="sClassInfo" style="margin:0; opacity:0.8;">Admission ID: -- | Class: --</p>
+        </div>
+    </div>
+
+    <div class="form-grid">
+        <div class="royal-card info-card">
+            <i class="fas fa-calendar-check fa-2x mb-2" style="color:var(--primary-color);"></i>
+            <h5>Attendance Status</h5>
+            <h2 id="attPercentage">0%</h2>
+            <p class="small text-muted" id="attDays">Present: 0 Days</p>
+        </div>
+
+        <div class="royal-card info-card">
+            <i class="fas fa-wallet fa-2x mb-2" style="color:var(--success);"></i>
+            <h5>Recent Fee Status</h5>
+            <h2 id="lastFeeAmt">₹ 0</h2>
+            <p id="feeStatusLabel" class="small">Fetching records...</p>
+        </div>
+
+        <div class="royal-card info-card">
+            <i class="fas fa-graduation-cap fa-2x mb-2" style="color:var(--accent-color);"></i>
+            <h5>Last Exam Result</h5>
+            <h2 id="lastGrade">--</h2>
+            <button class="btn-royal" style="font-size:0.7rem; padding:5px 15px;" onclick="location.href='report-card.html'">View Full Report</button>
+        </div>
+    </div>
+
+    <div class="royal-card mt-4">
+        <h5 class="card-title"><i class="fas fa-book-reader"></i> My Learning & Notices</h5>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+            <div class="form-section">
+                <span class="section-title">Latest Syllabus</span>
+                <div id="syllabusShortlist" style="font-size:0.9rem; color:#555;">
+                    Select exam to view syllabus...
+                </div>
+            </div>
+            <div class="form-section">
+                <span class="section-title">Fee History</span>
+                <div id="feeHistoryList" style="font-size:0.8rem;">
+                    Syncing transactions...
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="menu.js"></script>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyDqDmsMp2eAuHJBcjW-ciO2JcLTXapiIrs",
+  authDomain: "the-lalit-d7472.firebaseapp.com",
+  projectId: "the-lalit-d7472",
+  appId: "1:479237084229:web:31078825739b3c5712ff2c"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// IMPORTANT: Student Portal userEmail (or ID) se data fetch karega
+const studentEmail = localStorage.getItem('userEmail'); 
+
+async function loadPortalData() {
+    // 1. Get Student Personal Info (Assuming email matches login)
+    // Note: If you login by ID, use ID here.
+    const q = await db.collection('students').where("mobile", "==", studentEmail.split('@')[0]).get(); // Logic tweak as per your ID system
+    
+    // For demo, let's assume we fetch by the ID saved during login
+    const studentID = localStorage.getItem('studentID') || 2026001; 
+
+    const sDoc = await db.collection('students').doc(studentID.toString()).get();
+    if(!sDoc.exists) return;
+    const s = sDoc.data();
+
+    document.getElementById('sName').innerText = s.name.toUpperCase();
+    document.getElementById('sPhoto').src = s.photo || '';
+    document.getElementById('sClassInfo').innerText = `Admission ID: ${s.uniqueID} | Class: ${s.class}-${s.section}`;
+
+    // 2. Fetch Attendance
+    const attSnap = await db.collection('attendance').where("studentID", "==", Number(studentID)).get();
+    let presentCount = 0;
+    attSnap.forEach(doc => { if(doc.data().status === "Present") presentCount++; });
+    document.getElementById('attDays').innerText = `Present: ${presentCount} Days`;
+    document.getElementById('attPercentage').innerText = attSnap.size > 0 ? ((presentCount / attSnap.size) * 100).toFixed(0) + "%" : "0%";
+
+    // 3. Fetch Fee History
+    const feeSnap = await db.collection('fee_transactions')
+                          .where("studentID", "==", Number(studentID))
+                          .orderBy('timestamp', 'desc').limit(3).get();
+    
+    const feeList = document.getElementById('feeHistoryList');
+    feeList.innerHTML = "";
+    feeSnap.forEach(doc => {
+        const f = doc.data();
+        feeList.innerHTML += `<p>• ₹${f.amount} received for ${f.month} on ${f.date}</p>`;
+        if(document.getElementById('lastFeeAmt').innerText === "₹ 0") {
+            document.getElementById('lastFeeAmt').innerText = "₹ " + f.amount;
+            document.getElementById('feeStatusLabel').innerHTML = `<span class="fee-status-paid">Updated for ${f.month}</span>`;
+        }
+    });
+
+    // 4. Fetch Syllabus
+    const sylSnap = await db.collection('syllabus_master').where("targetClass", "==", s.class).limit(2).get();
+    const sylBox = document.getElementById('syllabusShortlist');
+    if(!sylSnap.empty) {
+        sylBox.innerHTML = "";
+        sylSnap.forEach(doc => {
+            sylBox.innerHTML += `<p><b>${doc.data().subject}:</b> ${doc.data().chapters.slice(0,2).join(', ')}...</p>`;
+        });
+    }
+}
+
+window.onload = loadPortalData;
+</script>
+</body>
+</html>
