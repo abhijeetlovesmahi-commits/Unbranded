@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | The Lalit Management</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore-compat.js"></script>
+</head>
+<body>
+
+<div class="dashboard-container">
+    <div class="main-content">
+        <div class="royal-card" style="padding: 15px 25px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; border-top: none; border-bottom: 3px solid var(--accent-color);">
+            <h4 style="margin:0; font-family:'Cinzel'; color:var(--primary-color);">Welcome, <span id="userDispName">Admin</span></h4>
+            <div style="font-weight: bold; color: var(--accent-color);" id="currentDate"></div>
+        </div>
+
+        <div class="form-grid mb-4">
+            <div class="royal-card text-center" style="border-top-color: #3498db;">
+                <i class="fas fa-user-graduate fa-2x mb-2" style="color:#3498db;"></i>
+                <p class="text-muted small mb-1">TOTAL STUDENTS</p>
+                <h2 id="statStudents">0</h2>
+            </div>
+            <div class="royal-card text-center" style="border-top-color: var(--success);">
+                <i class="fas fa-wallet fa-2x mb-2" style="color:var(--success);"></i>
+                <p class="text-muted small mb-1">TODAY'S CASH</p>
+                <h2 id="statCash">₹0</h2>
+            </div>
+            <div class="royal-card text-center" style="border-top-color: #e67e22;">
+                <i class="fas fa-user-check fa-2x mb-2" style="color:#e67e22;"></i>
+                <p class="text-muted small mb-1">PRESENT TODAY</p>
+                <h2 id="statAttendance">0</h2>
+            </div>
+            <div class="royal-card text-center" style="border-top-color: var(--danger);">
+                <i class="fas fa-exclamation-triangle fa-2x mb-2" style="color:var(--danger);"></i>
+                <p class="text-muted small mb-1">FEE DEFAULTERS</p>
+                <h2 id="statDefaulters">0</h2>
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 2fr 1.2fr; gap: 20px;">
+            <div class="royal-card">
+                <h5 class="card-title"><i class="fas fa-chart-line"></i> Revenue Analytics</h5>
+                <canvas id="revenueChart" height="150"></canvas>
+            </div>
+
+            <div class="royal-card">
+                <h5 class="card-title"><i class="fas fa-bolt"></i> Quick Actions</h5>
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <button class="btn-royal" onclick="location.href='collect-fees.html'" style="font-size: 0.8rem;"><i class="fas fa-plus"></i> Collect Fee</button>
+                    <button class="btn-royal" onclick="location.href='add-student.html'" style="font-size: 0.8rem; background:#2ecc71; border-color:#2ecc71;"><i class="fas fa-user-plus"></i> New Admission</button>
+                    <button class="btn-royal" onclick="location.href='attendance.html'" style="font-size: 0.8rem; background:#34495e; border-color:#34495e;"><i class="fas fa-check"></i> Mark Attendance</button>
+                </div>
+                
+                <hr>
+                <h6 style="color:var(--primary-color); font-weight:bold;">Registry Notice Board</h6>
+                <marquee direction="up" scrollamount="2" style="height: 80px; font-size: 0.85rem; color: #666;">
+                    • New Session 2026-27 starts from April 1st.<br><br>
+                    • Faculty meeting today at 3:00 PM in Seminar Hall.<br><br>
+                    • Late fee fine will be applicable after 10th of every month.
+                </marquee>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="menu.js"></script>
+<script>
+// --- Firebase Setup ---
+const firebaseConfig = {
+  apiKey: "AIzaSyDqDmsMp2eAuHJBcjW-ciO2JcLTXapiIrs",
+  authDomain: "the-lalit-d7472.firebaseapp.com",
+  projectId: "the-lalit-d7472",
+  appId: "1:479237084229:web:31078825739b3c5712ff2c"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// --- Initialization ---
+window.onload = function() {
+    // 1. Check Auth & Role
+    const role = localStorage.getItem('userRole');
+    if(!role) window.location.href = "login.html";
+    document.getElementById('userDispName').innerText = role.charAt(0).toUpperCase() + role.slice(1);
+    
+    // 2. Set Date
+    document.getElementById('currentDate').innerText = new Date().toDateString();
+
+    // 3. Fetch Real Stats
+    fetchDashboardStats();
+    
+    // 4. Init Chart
+    initChart();
+};
+
+async function fetchDashboardStats() {
+    // Total Students
+    db.collection('students').onSnapshot(snap => {
+        document.getElementById('statStudents').innerText = snap.size;
+    });
+
+    // Today's Cash
+    const today = new Date().toLocaleDateString('en-GB');
+    db.collection('fee_transactions').where('date', '==', today).onSnapshot(snap => {
+        let total = 0;
+        snap.forEach(doc => total += Number(doc.data().amount || 0));
+        document.getElementById('statCash').innerText = "₹" + total;
+    });
+
+    // Today's Attendance
+    db.collection('attendance').where('date', '==', today).where('status', '==', 'Present').onSnapshot(snap => {
+        document.getElementById('statAttendance').innerText = snap.size;
+    });
+}
+
+function initChart() {
+    const ctx = document.getElementById('revenueChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+            datasets: [{
+                label: 'Monthly Fee Collection (₹)',
+                data: [45000, 52000, 48000, 120000, 85000, 95000],
+                borderColor: '#002366',
+                backgroundColor: 'rgba(0,35,102,0.1)',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } }
+        }
+    });
+}
+</script>
+</body>
+</html>
