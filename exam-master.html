@@ -3,108 +3,102 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Exam Master | The Lalit</title>
+    <title>Exam Master | The Lalit Imperial</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore-compat.js"></script>
+    <script src="init.js"></script>
     <style>
-        .subject-row {
+        .sub-row {
             display: grid; grid-template-columns: 2fr 1fr 1fr 0.5fr; gap: 10px;
-            background: #f8f9fa; padding: 10px; border-radius: 5px; margin-bottom: 5px;
-            align-items: center; border: 1px solid #eee;
+            background: #fff; padding: 10px; border-radius: 8px;
+            margin-bottom: 8px; border: 1px solid #ddd; align-items: center;
         }
-        .max-marks-badge { background: var(--primary-color); color: var(--accent-color); padding: 5px; border-radius: 4px; font-size: 0.8rem; }
+        .exam-badge { background: var(--primary); color: var(--accent); padding: 5px 10px; border-radius: 5px; font-size: 0.8rem; font-weight: bold; }
     </style>
 </head>
 <body>
 
-<div class="main-content">
-    <div class="royal-card">
-        <h2 class="card-title"><i class="fas fa-file-signature"></i> Examination Master Controller</h2>
+<div class="wrapper">
+    <script src="menu.js"></script>
 
-        <div class="form-grid">
-            <div class="form-section">
-                <span class="section-title">Step 1: Exam Basic Info</span>
-                <div class="form-group mb-3">
-                    <label>Exam Name (e.g., Periodic Test-I, Annual)</label>
-                    <input type="text" id="exName" placeholder="Enter Exam Name" required>
+    <div class="main-content">
+        <div class="royal-card">
+            <h2 class="card-title"><i class="fas fa-file-signature"></i> Examination Master Configuration</h2>
+            
+            <div class="form-grid">
+                <div class="form-section">
+                    <span class="section-title">I. Exam Identity</span>
+                    <div class="form-group mb-3">
+                        <label>Exam Name (e.g. Periodic Test-I, Annual)</label>
+                        <input type="text" id="exName" placeholder="Enter Exam Name" required>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label>Target Class</label>
+                        <select id="exClass">
+                            <option value="">-- Select Class --</option>
+                            <option value="Nursery">Nursery</option><option value="LKG">LKG</option><option value="UKG">UKG</option>
+                            <script>for(let i=1; i<=12; i++) document.write(`<option value="${i}">Class ${i}</option>`);</script>
+                        </select>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label>Exam Start Date</label>
+                        <input type="date" id="exDate">
+                    </div>
                 </div>
-                <div class="form-group mb-3">
-                    <label>Target Class</label>
-                    <select id="exClass">
-                        <option value="">-- Select Class --</option>
-                        <script>for(let i=1; i<=12; i++) document.write(`<option value="${i}">Class ${i}</option>`);</script>
-                        <option value="Nursery">Nursery</option><option value="LKG">LKG</option><option value="UKG">UKG</option>
-                    </select>
-                </div>
-                <div class="form-group mb-3">
-                    <label>Tentative Start Date</label>
-                    <input type="date" id="exDate">
+
+                <div class="form-section">
+                    <span class="section-title">II. Subjects & Max Marks</span>
+                    <div id="subjectContainer">
+                        <div style="display:grid; grid-template-columns: 2fr 1fr 1fr 0.5fr; gap:10px; font-size:0.7rem; font-weight:bold; color:var(--primary); margin-bottom:5px;">
+                            <span>SUBJECT</span><span>THEORY</span><span>PRAC</span><span></span>
+                        </div>
+                        <div class="sub-row">
+                            <input type="text" class="in-sub" placeholder="English" value="English">
+                            <input type="number" class="in-th" value="80">
+                            <input type="number" class="in-pr" value="20">
+                            <button class="btn-royal" style="background:var(--danger); border:none;" onclick="this.parentElement.remove()">×</button>
+                        </div>
+                    </div>
+                    <button class="btn-royal mt-2" style="font-size:0.7rem; background:#34495e;" onclick="addSubjectRow()">+ Add Subject</button>
                 </div>
             </div>
 
-            <div class="form-section">
-                <span class="section-title">Step 2: Subject & Max Marks Mapping</span>
-                <div id="subjectList">
-                    <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 0.5fr; gap: 10px; margin-bottom: 5px; font-size: 0.7rem; font-weight: bold; color: var(--primary-color);">
-                        <span>SUBJECT NAME</span><span>MAX (THEORY)</span><span>MAX (PRAC)</span><span></span>
-                    </div>
-                    <div class="subject-row">
-                        <input type="text" class="sub-name" value="English">
-                        <input type="number" class="sub-theory" value="80">
-                        <input type="number" class="sub-prac" value="20">
-                        <button class="btn-royal" style="background:var(--danger); border:none;" onclick="this.parentElement.remove()">×</button>
-                    </div>
+            <button class="btn-royal w-100 mt-4" onclick="saveExamConfig()"><i class="fas fa-save"></i> Finalize & Lock Exam Structure</button>
+
+            <div class="mt-5">
+                <h3 class="card-title" style="font-size: 1.2rem;"><i class="fas fa-list-ul"></i> Active Exam Structures</h3>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Exam Detail</th>
+                                <th>Class</th>
+                                <th>Subjects</th>
+                                <th>Date</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="examTableBody"></tbody>
+                    </table>
                 </div>
-                <button class="btn-royal mt-2" style="font-size: 0.75rem; background:#34495e;" onclick="addNewSubjectRow()"><i class="fas fa-plus"></i> Add Another Subject</button>
-            </div>
-        </div>
-
-        <button class="btn-royal w-100 mt-4" onclick="saveExamConfig()"><i class="fas fa-save"></i> Lock & Save Exam Configuration</button>
-
-        <div class="mt-5">
-            <h5 class="section-subtitle">Active Exam Structures</h5>
-            <div class="table-responsive">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Exam Name</th>
-                            <th>Class</th>
-                            <th>Date</th>
-                            <th>Total Subjects</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="examTableBody"></tbody>
-                </table>
             </div>
         </div>
     </div>
 </div>
 
-<script src="menu.js"></script>
 <script>
-// --- Firebase Refined Config ---
-const firebaseConfig = {
-  apiKey: "AIzaSyDqDmsMp2eAuHJBcjW-ciO2JcLTXapiIrs",
-  authDomain: "the-lalit-d7472.firebaseapp.com",
-  projectId: "the-lalit-d7472",
-  appId: "1:479237084229:web:31078825739b3c5712ff2c"
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-
-function addNewSubjectRow(name='', theory=80, prac=20) {
+function addSubjectRow() {
     const row = document.createElement('div');
-    row.className = 'subject-row';
+    row.className = 'sub-row';
     row.innerHTML = `
-        <input type="text" class="sub-name" value="${name}" placeholder="Subject">
-        <input type="number" class="sub-theory" value="${theory}">
-        <input type="number" class="sub-prac" value="${prac}">
+        <input type="text" class="in-sub" placeholder="Subject Name">
+        <input type="number" class="in-th" value="80">
+        <input type="number" class="in-pr" value="20">
         <button class="btn-royal" style="background:var(--danger); border:none;" onclick="this.parentElement.remove()">×</button>
     `;
-    document.getElementById('subjectList').appendChild(row);
+    document.getElementById('subjectContainer').appendChild(row);
 }
 
 async function saveExamConfig() {
@@ -112,29 +106,29 @@ async function saveExamConfig() {
     const cls = document.getElementById('exClass').value;
     const date = document.getElementById('exDate').value;
 
-    if(!name || !cls) return alert("Exam Name and Class are mandatory!");
+    if(!name || !cls) return alert("Exam Name and Class are required!");
 
     const subjects = [];
-    document.querySelectorAll('.subject-row').forEach(row => {
-        const sName = row.querySelector('.sub-name').value;
-        const sTheory = row.querySelector('.sub-theory').value;
-        const sPrac = row.querySelector('.sub-prac').value;
-        if(sName) subjects.push({ name: sName, maxTheory: Number(sTheory), maxPrac: Number(sPrac) });
+    document.querySelectorAll('.sub-row').forEach(row => {
+        const sub = row.querySelector('.in-sub').value;
+        const th = row.querySelector('.in-th').value;
+        const pr = row.querySelector('.in-pr').value;
+        if(sub) subjects.push({ name: sub, maxTheory: Number(th), maxPrac: Number(pr) });
     });
 
-    // Syncing with Database: Doc ID is ExamName_Class
     const docID = `${name}_${cls}`.replace(/\s+/g, '-');
-    
-    await db.collection('exam_settings').doc(docID).set({
-        examName: name,
-        targetClass: cls,
-        startDate: date,
-        subjects: subjects,
-        timestamp: Date.now()
-    });
 
-    alert("Exam Configuration Saved for " + cls);
-    loadExams();
+    try {
+        await db.collection('exam_settings').doc(docID).set({
+            examName: name,
+            targetClass: cls,
+            startDate: date,
+            subjects: subjects,
+            timestamp: Date.now()
+        });
+        alert("Exam Locked Successfully for Class " + cls);
+        location.reload();
+    } catch (e) { alert(e.message); }
 }
 
 async function loadExams() {
@@ -146,10 +140,10 @@ async function loadExams() {
         const d = doc.data();
         tbody.innerHTML += `
             <tr>
-                <td><b>${d.examName}</b></td>
+                <td><b style="color:var(--primary)">${d.examName}</b></td>
                 <td>Class ${d.targetClass}</td>
+                <td><span class="exam-badge">${d.subjects.length} Subjects</span></td>
                 <td>${d.startDate || 'N/A'}</td>
-                <td><span class="max-marks-badge">${d.subjects.length} Subjects</span></td>
                 <td>
                     <button class="btn-royal" style="padding:5px 10px; background:var(--danger); border:none;" onclick="deleteExam('${doc.id}')"><i class="fas fa-trash"></i></button>
                 </td>
@@ -158,7 +152,7 @@ async function loadExams() {
 }
 
 async function deleteExam(id) {
-    if(confirm("Erase this Exam Structure?")) {
+    if(confirm("Erase this Exam Structure? Marks entered under this exam may become inaccessible.")) {
         await db.collection('exam_settings').doc(id).delete();
         loadExams();
     }
