@@ -3,36 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Marks Entry | The Lalit</title>
+    <title>Marks Entry | The Lalit Imperial</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore-compat.js"></script>
+    <script src="init.js"></script>
     <style>
         .marks-input {
-            width: 70px; padding: 5px; text-align: center;
-            border: 1px solid #ddd; border-bottom: 2px solid var(--accent-color);
-            font-weight: bold;
+            width: 75px; padding: 6px; text-align: center;
+            border: 1px solid #ddd; border-bottom: 2px solid var(--accent);
+            font-weight: bold; border-radius: 4px;
         }
-        .marks-input:focus { background: var(--bg-light); outline: none; }
-        .max-label { font-size: 0.65rem; color: #888; display: block; }
-        .subject-header { background: var(--primary-color) !important; color: var(--accent-color) !important; font-size: 0.75rem; }
+        .marks-input:focus { border-color: var(--primary); outline: none; background: #fffdf0; }
+        .sub-header { background: var(--primary) !important; color: var(--accent) !important; font-size: 0.7rem; }
+        .max-hint { font-size: 0.6rem; color: #888; display: block; margin-top: 2px; }
+        input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
     </style>
 </head>
 <body>
 
-<div class="main-content">
-    <div class="royal-card">
-        <h2 class="card-title"><i class="fas fa-edit"></i> Academic Marks Entry</h2>
+<div class="wrapper">
+    <script src="menu.js"></script>
 
-        <div class="form-section no-print">
-            <div class="form-grid">
+    <div class="main-content">
+        <div class="royal-card">
+            <h2 class="card-title"><i class="fas fa-pen-nib"></i> Scholastic Marks Entry Portal</h2>
+
+            <div class="form-grid mb-4 no-print" style="background: var(--bg-light); padding: 15px; border-radius: 12px;">
                 <div class="form-group">
-                    <label>Select Class</label>
+                    <label>Target Class</label>
                     <select id="mClass" onchange="loadExamsForClass()">
                         <option value="">-- Choose Class --</option>
-                        <script>for(let i=1; i<=12; i++) document.write(`<option value="${i}">Class ${i}</option>`);</script>
                         <option value="Nursery">Nursery</option><option value="LKG">LKG</option><option value="UKG">UKG</option>
+                        <script>for(let i=1; i<=12; i++) document.write(`<option value="${i}">Class ${i}</option>`);</script>
                     </select>
                 </div>
                 <div class="form-group">
@@ -42,45 +46,37 @@
                     </select>
                 </div>
                 <div class="form-group" style="display:flex; align-items:flex-end;">
-                    <button class="btn-royal" onclick="generateMarksheet()"><i class="fas fa-sync"></i> Load Marksheet</button>
+                    <button class="btn-royal" onclick="generateMarkingTable()"><i class="fas fa-list-ol"></i> Load Students</button>
                 </div>
             </div>
-        </div>
 
-        <div id="marksArea" style="display:none; margin-top:30px;">
-            <div class="table-responsive">
-                <table id="marksTable">
-                    <thead id="marksHead">
-                        </thead>
-                    <tbody id="marksBody">
-                        </tbody>
-                </table>
+            <div id="markingArea" style="display:none; margin-top:30px;">
+                <div style="margin-bottom:15px; display:flex; justify-content:space-between; align-items:center;">
+                    <h5 id="tableHeading" style="margin:0; color:var(--primary); font-family:'Cinzel';"></h5>
+                    <small style="color:var(--danger);"><i class="fas fa-info-circle"></i> Tab to move next</small>
+                </div>
+                
+                <div class="table-responsive">
+                    <table border="1">
+                        <thead id="markingHead"></thead>
+                        <tbody id="markingBody"></tbody>
+                    </table>
+                </div>
+
+                <button class="btn-royal w-100 mt-4" onclick="saveMarksBatch()"><i class="fas fa-save"></i> Lock & Synchronize Marks</button>
             </div>
-            <button class="btn-royal w-100 mt-4" onclick="saveAllMarks()"><i class="fas fa-cloud-upload-alt"></i> Final Submit & Lock Marks</button>
         </div>
     </div>
 </div>
 
-<script src="menu.js"></script>
 <script>
-// --- Firebase Refined Config ---
-const firebaseConfig = {
-  apiKey: "AIzaSyDqDmsMp2eAuHJBcjW-ciO2JcLTXapiIrs",
-  authDomain: "the-lalit-d7472.firebaseapp.com",
-  projectId: "the-lalit-d7472",
-  appId: "1:479237084229:web:31078825739b3c5712ff2c"
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+let activeSubjects = [];
+let activeStudents = [];
 
-let activeExamConfig = null;
-let studentsList = [];
-
-// 1. Load Exams based on Class
 async function loadExamsForClass() {
     const cls = document.getElementById('mClass').value;
     const examSelect = document.getElementById('mExam');
-    examSelect.innerHTML = '<option value="">Loading...</option>';
+    examSelect.innerHTML = '<option value="">Searching...</option>';
     
     const snap = await db.collection('exam_settings').where("targetClass", "==", cls).get();
     examSelect.innerHTML = '<option value="">-- Select Exam --</option>';
@@ -89,94 +85,103 @@ async function loadExamsForClass() {
     });
 }
 
-// 2. Generate the Dynamic Table
-async function generateMarksheet() {
+async function generateMarkingTable() {
     const examID = document.getElementById('mExam').value;
     const cls = document.getElementById('mClass').value;
+    if(!examID) return alert("Select Exam First!");
 
-    if(!examID) return alert("Please select an exam!");
-
-    // Fetch Exam Config
+    // Fetch Settings & Students
     const exDoc = await db.collection('exam_settings').doc(examID).get();
-    activeExamConfig = exDoc.data();
+    activeSubjects = exDoc.data().subjects;
 
-    // Fetch Students
     const stdSnap = await db.collection('students').where("class", "==", cls).get();
-    studentsList = [];
-    stdSnap.forEach(doc => studentsList.push(doc.data()));
-    studentsList.sort((a,b) => a.uniqueID - b.uniqueID);
+    activeStudents = [];
+    stdSnap.forEach(doc => activeStudents.push(doc.data()));
+    activeStudents.sort((a,b) => a.uniqueID - b.uniqueID);
 
-    // Build Header
-    let headHTML = `<tr><th rowspan="2">Roll No</th><th rowspan="2">Student Name</th>`;
-    let subHeaderHTML = `<tr>`;
-    
-    activeExamConfig.subjects.forEach(sub => {
-        headHTML += `<th colspan="2" class="subject-header">${sub.name}</th>`;
-        subHeaderHTML += `<th class="subject-header"><span class="max-label">Theory (${sub.maxTheory})</span></th>
-                          <th class="subject-header"><span class="max-label">Prac (${sub.maxPrac})</span></th>`;
+    // Build Table Header
+    let headHTML = `<tr><th rowspan="2">ID</th><th rowspan="2">Student Name</th>`;
+    let subRow = `<tr>`;
+    activeSubjects.forEach(sub => {
+        headHTML += `<th colspan="2" class="sub-header">${sub.name}</th>`;
+        subRow += `<th class="sub-header"><span class="max-hint">Th (${sub.maxTheory})</span></th>
+                   <th class="sub-header"><span class="max-hint">Pr (${sub.maxPrac})</span></th>`;
     });
-    headHTML += `</tr>` + subHeaderHTML + `</tr>`;
-    document.getElementById('marksHead').innerHTML = headHTML;
+    headHTML += `</tr>${subRow}</tr>`;
+    document.getElementById('markingHead').innerHTML = headHTML;
 
-    // Build Rows
+    // Build Table Body
     let bodyHTML = "";
-    studentsList.forEach(s => {
+    activeStudents.forEach(s => {
         bodyHTML += `<tr>
-            <td>${s.uniqueID.toString().slice(-3)}</td>
-            <td style="text-align:left;"><b>${s.name}</b></td>`;
-        
-        activeExamConfig.subjects.forEach(sub => {
+            <td style="font-size:0.7rem; font-weight:bold;">${s.uniqueID}</td>
+            <td align="left"><b>${s.name.toUpperCase()}</b></td>`;
+        activeSubjects.forEach(sub => {
             bodyHTML += `
-                <td><input type="number" class="marks-input" data-sid="${s.uniqueID}" data-sub="${sub.name}" data-type="theory" max="${sub.maxTheory}"></td>
-                <td><input type="number" class="marks-input" data-sid="${s.uniqueID}" data-sub="${sub.name}" data-type="prac" max="${sub.maxPrac}"></td>`;
+                <td><input type="number" class="marks-input in-th" data-sid="${s.uniqueID}" data-sub="${sub.name}" max="${sub.maxTheory}"></td>
+                <td><input type="number" class="marks-input in-pr" data-sid="${s.uniqueID}" data-sub="${sub.name}" max="${sub.maxPrac}"></td>`;
         });
         bodyHTML += `</tr>`;
     });
-    document.getElementById('marksBody').innerHTML = bodyHTML;
-    document.getElementById('marksArea').style.display = 'block';
-    
-    loadExistingMarks(); // Load if already filled
+    document.getElementById('markingBody').innerHTML = bodyHTML;
+    document.getElementById('markingArea').style.display = "block";
+    document.getElementById('tableHeading').innerText = `Marking Sheet: ${exDoc.data().examName}`;
+
+    fetchExistingMarks(examID);
 }
 
-async function saveAllMarks() {
-    const batch = db.batch();
+async function fetchExistingMarks(examID) {
+    const snap = await db.collection('marks_entry').where("examID", "==", examID).get();
+    snap.forEach(doc => {
+        const d = doc.data();
+        const thIn = document.querySelector(`.in-th[data-sid="${d.studentID}"][data-sub="${d.subject}"]`);
+        const prIn = document.querySelector(`.in-pr[data-sid="${d.studentID}"][data-sub="${d.subject}"]`);
+        if(thIn) thIn.value = d.theory;
+        if(prIn) prIn.value = d.practical;
+    });
+}
+
+async function saveMarksBatch() {
     const examID = document.getElementById('mExam').value;
+    const batch = db.batch();
     const inputs = document.querySelectorAll('.marks-input');
     
+    let error = false;
     inputs.forEach(input => {
-        const sid = input.getAttribute('data-sid');
-        const sub = input.getAttribute('data-sub');
-        const type = input.getAttribute('data-type');
-        const val = input.value || 0;
+        const val = Number(input.value) || 0;
+        const max = Number(input.getAttribute('max'));
+        if(val > max) {
+            input.style.borderColor = "red";
+            error = true;
+        } else {
+            input.style.borderColor = "";
+        }
+    });
 
-        // Doc ID: StudentID_ExamID_Subject
-        const docRef = db.collection('marks_entry').doc(`${sid}_${examID}_${sub}`);
-        batch.set(docRef, {
-            studentID: Number(sid),
-            examID: examID,
-            subject: sub,
-            [type]: Number(val),
-            timestamp: Date.now()
-        }, { merge: true });
+    if(error) return alert("Some marks exceed Maximum Marks! Please check red fields.");
+
+    // Logic: Save unique doc for each Student+Subject+Exam
+    activeStudents.forEach(s => {
+        activeSubjects.forEach(sub => {
+            const th = document.querySelector(`.in-th[data-sid="${s.uniqueID}"][data-sub="${sub.name}"]`).value;
+            const pr = document.querySelector(`.in-pr[data-sid="${s.uniqueID}"][data-sub="${sub.name}"]`).value;
+            
+            const docRef = db.collection('marks_entry').doc(`${s.uniqueID}_${examID}_${sub.name.replace(/\s+/g,'')}`);
+            batch.set(docRef, {
+                studentID: Number(s.uniqueID),
+                examID: examID,
+                subject: sub.name,
+                theory: Number(th) || 0,
+                practical: Number(pr) || 0,
+                timestamp: Date.now()
+            });
+        });
     });
 
     try {
         await batch.commit();
-        alert("All Marks Successfully Locked in Registry!");
+        alert("🎉 Imperial Academic Record Synchronized!");
     } catch (e) { alert(e.message); }
-}
-
-async function loadExistingMarks() {
-    const examID = document.getElementById('mExam').value;
-    const snap = await db.collection('marks_entry').where("examID", "==", examID).get();
-    
-    snap.forEach(doc => {
-        const d = doc.data();
-        const tInput = document.querySelector(`input[data-sid="${d.studentID}"][data-sub="${d.subject}"][data-type="theory"]`);
-        const pInput = document.querySelector(`input[data-sid="${d.studentID}"][data-sub="${d.subject}"][data-type="prac"]`);
-        if(tInput) tInput.value = d.theory;
-        if(pInput) pInput.value = d.prac;
-    });
 }
 </script>
 </body>
