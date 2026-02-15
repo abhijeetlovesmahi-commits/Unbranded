@@ -1,132 +1,231 @@
-/* --- THE LALIT INTERNATIONAL SCHOOL - GLOBAL THEME --- */
+/* THE LALIT IMPERIAL - MASTER STYLESHEET 
+   Everything in one file: Layout, Sidebar, Cards, UI Elements 
+*/
+
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Poppins:wght@300;400;600&display=swap');
+
 :root {
-    --primary-color: #002366;    /* Royal Blue */
-    --accent-color: #D4AF37;     /* Imperial Gold */
-    --bg-light: #FDFBF0;         /* Parchment Paper */
+    --primary: #002366;       /* Royal Blue */
+    --accent: #D4AF37;        /* Gold */
+    --bg-light: #f0f2f5;      /* Light Grey Background */
     --white: #ffffff;
-    --danger: #e74c3c;
-    --success: #27ae60;
-    --sidebar-width: 280px;
-    --font-main: 'Poppins', sans-serif;
-    --font-heading: 'Cinzel', serif;
+    --text-dark: #1a1a1a;
+    --text-muted: #666666;
+    --success: #27ae60;       /* Emerald Green */
+    --danger: #c0392b;        /* Alizarin Red */
+    --sidebar-width: 260px;
+    --transition: 0.3s ease;
 }
+
+* { box-sizing: border-box; }
 
 body {
+    font-family: 'Poppins', sans-serif;
     background-color: var(--bg-light);
-    font-family: var(--font-main);
+    color: var(--text-dark);
     margin: 0;
-    overflow-x: hidden;
+    padding: 0;
 }
 
-/* --- Reusable Layout Components --- */
-.dashboard-container {
+/* --- MAIN LAYOUT STRUCTURE --- */
+.wrapper {
     display: flex;
     min-height: 100vh;
 }
 
-.main-content {
-    flex-grow: 1;
-    padding: 30px;
-    margin-left: var(--sidebar-width);
-    transition: 0.3s;
+/* SIDEBAR DESIGN */
+.sidebar {
+    width: var(--sidebar-width);
+    background: var(--primary);
+    color: var(--white);
+    position: fixed;
+    height: 100vh;
+    overflow-y: auto;
+    border-right: 4px solid var(--accent);
+    z-index: 1000;
 }
 
-/* --- Imperial Card Style --- */
+.sidebar-header {
+    padding: 25px;
+    text-align: center;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.sidebar-header h2 {
+    font-family: 'Cinzel', serif;
+    color: var(--accent);
+    font-size: 1.2rem;
+    margin: 0;
+}
+
+.sidebar-menu {
+    padding: 15px 0;
+    list-style: none;
+    margin: 0;
+}
+
+.sidebar-menu li a {
+    display: flex;
+    align-items: center;
+    padding: 15px 25px;
+    color: rgba(255,255,255,0.8);
+    text-decoration: none;
+    transition: var(--transition);
+    border-left: 4px solid transparent;
+}
+
+.sidebar-menu li a i { width: 30px; font-size: 1.1rem; }
+
+.sidebar-menu li a:hover, .sidebar-menu li.active a {
+    background: rgba(255,255,255,0.1);
+    color: var(--accent);
+    border-left: 4px solid var(--accent);
+}
+
+/* MAIN CONTENT AREA */
+.main-content {
+    margin-left: var(--sidebar-width);
+    width: calc(100% - var(--sidebar-width));
+    padding: 40px;
+    transition: var(--transition);
+}
+
+/* --- ROYAL CARDS & CONTAINERS --- */
 .royal-card {
     background: var(--white);
     border-radius: 12px;
-    border-top: 5px solid var(--primary-color);
+    padding: 30px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-    padding: 25px;
-    margin-bottom: 25px;
-    border-left: 1px solid #eee;
-    border-right: 1px solid #eee;
+    margin-bottom: 30px;
+    border-top: 5px solid var(--primary);
+    animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 .card-title {
-    font-family: var(--font-heading);
-    color: var(--primary-color);
-    border-bottom: 2px double var(--accent-color);
-    padding-bottom: 10px;
-    margin-bottom: 20px;
+    font-family: 'Cinzel', serif;
+    color: var(--primary);
+    font-size: 1.5rem;
     display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-top: 0;
+    margin-bottom: 25px;
+    border-bottom: 2px solid #eee;
+    padding-bottom: 15px;
+}
+
+/* --- FORM ELEMENTS --- */
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 25px;
+}
+
+.form-group { margin-bottom: 20px; }
+
+.form-group label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+    color: var(--primary);
+}
+
+input, select, textarea {
+    width: 100%;
+    padding: 12px 15px;
+    border: 2px solid #e1e1e1;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-family: inherit;
+    transition: var(--transition);
+}
+
+input:focus, select:focus {
+    border-color: var(--primary);
+    outline: none;
+    box-shadow: 0 0 8px rgba(0,35,102,0.1);
+}
+
+/* --- BUTTONS --- */
+.btn-royal {
+    background: var(--primary);
+    color: var(--accent);
+    border: 2px solid var(--primary);
+    padding: 12px 25px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: var(--transition);
+    display: inline-flex;
     align-items: center;
     gap: 10px;
 }
 
-/* --- Form Design (Accurate & Efficient) --- */
-.form-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 20px;
-}
-
-.form-group {
-    display: flex;
-    flex-direction: column;
-}
-
-label {
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: #555;
-    margin-bottom: 5px;
-}
-
-input, select, textarea {
-    padding: 12px;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    font-size: 0.95rem;
-    transition: 0.3s;
-}
-
-input:focus {
-    border-color: var(--primary-color);
-    outline: none;
-    box-shadow: 0 0 5px rgba(0,35,102,0.2);
-}
-
-/* --- Buttons --- */
-.btn-royal {
-    background: var(--primary-color);
-    color: var(--accent-color);
-    border: 1px solid var(--accent-color);
-    padding: 12px 25px;
-    font-weight: bold;
-    text-transform: uppercase;
-    cursor: pointer;
-    border-radius: 6px;
-    transition: 0.3s;
-}
-
 .btn-royal:hover {
-    background: var(--accent-color);
-    color: var(--primary-color);
+    background: var(--accent);
+    color: var(--primary);
+    border-color: var(--accent);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(212,175,55,0.3);
 }
 
-/* Responsive Table */
-.table-responsive {
-    overflow-x: auto;
-}
+.btn-danger { background: var(--danger); color: white; border-color: var(--danger); }
+
+/* --- DATA TABLES --- */
+.table-responsive { overflow-x: auto; border-radius: 12px; }
 
 table {
     width: 100%;
     border-collapse: collapse;
+    background: var(--white);
 }
 
 th {
-    background: var(--primary-color);
-    color: var(--accent-color);
+    background: var(--primary);
+    color: var(--accent);
     padding: 15px;
     text-align: left;
+    font-family: 'Cinzel', serif;
+    font-size: 0.85rem;
+    letter-spacing: 1px;
 }
 
 td {
-    padding: 12px;
-    border-bottom: 1px solid #eee;
+    padding: 15px;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 0.95rem;
 }
 
-@media (max-width: 992px) {
-    .main-content { margin-left: 0; }
+tr:hover td { background: #fcf9f0; }
+
+/* --- STATUS BADGES --- */
+.badge {
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: bold;
+}
+.badge-paid { background: #e8f5e9; color: var(--success); }
+.badge-pending { background: #feebee; color: var(--danger); }
+
+/* --- PRINT SETTINGS --- */
+@media print {
+    .sidebar, .no-print, .btn-royal { display: none !important; }
+    .main-content { margin-left: 0 !important; width: 100% !important; padding: 0 !important; }
+    .royal-card { box-shadow: none; border: 1px solid #eee; margin: 0; }
+}
+
+/* --- MOBILE RESPONSIVE --- */
+@media (max-width: 768px) {
+    .sidebar { width: 70px; }
+    .sidebar-header h2, .sidebar-menu span { display: none; }
+    .main-content { margin-left: 70px; width: calc(100% - 70px); padding: 20px; }
 }
