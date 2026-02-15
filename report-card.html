@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Report Card | The Lalit</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore-compat.js"></script>
+    <style>
+        /* Printing & Design Logic */
+        .report-card-container {
+            width: 210mm; min-height: 297mm; padding: 20mm;
+            margin: auto; background: white; border: 15px double var(--primary-color);
+            position: relative; box-sizing: border-box;
+        }
+        .report-card-container::before {
+            content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: url('logo.png') no-repeat center; background-size: 400px;
+            opacity: 0.05; z-index: 0;
+        }
+        .header-table, .info-table, .marks-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; position: relative; z-index: 1; }
+        .marks-table th, .marks-table td { border: 1px solid #000; padding: 8px; text-align: center; font-size: 13px; }
+        .marks-table th { background: #f2f2f2; }
+        
+        .grade-badge { font-weight: bold; color: var(--primary-color); }
+        .result-banner { 
+            background: var(--primary-color); color: var(--accent-color); 
+            padding: 10px; text-align: center; font-family: 'Cinzel'; font-size: 1.2rem;
+        }
+        
+        @media print {
+            body { background: none; padding: 0; }
+            .no-print { display: none !important; }
+            .main-content { padding: 0; margin: 0; }
+            .report-card-container { border: 10px double var(--primary-color); margin: 0; width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="main-content">
+    <div class="royal-card no-print">
+        <h2 class="card-title"><i class="fas fa-file-invoice"></i> Generate Imperial Report Card</h2>
+        <div class="form-grid">
+            <div class="form-group">
+                <label>Select Student ID</label>
+                <input type="number" id="rptID" placeholder="Enter Admission ID (e.g. 2026001)">
+            </div>
+            <div class="form-group">
+                <label>Select Exam</label>
+                <select id="rptExam">
+                    </select>
+            </div>
+            <div class="form-group" style="display:flex; align-items:flex-end;">
+                <button class="btn-royal" onclick="generateReport()"><i class="fas fa-magic"></i> Generate Report</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="printArea" style="display: none;">
+        <div class="report-card-container">
+            <table class="header-table">
+                <tr>
+                    <td width="100"><img src="logo.png" width="90"></td>
+                    <td align="center">
+                        <h1 style="font-family:'Cinzel'; color:var(--primary-color); margin:0; font-size:2rem;">THE LALIT INTERNATIONAL SCHOOL</h1>
+                        <p style="margin:5px 0; font-weight:bold;">Affiliated to CBSE | Academic Session 2025-26</p>
+                        <p style="font-size:0.8rem;">Official Progress Report of Scholastic & Co-Scholastic Areas</p>
+                    </td>
+                </tr>
+            </table>
+
+            <div class="result-banner" id="rptExamTitle">ANNUAL EXAMINATION</div>
+
+            <table class="info-table" style="border: 1px solid #000; padding: 10px;">
+                <tr>
+                    <td width="70%">
+                        <p>Name: <b id="rptName">---</b></p>
+                        <p>Father's Name: <b id="rptFather">---</b></p>
+                        <p>Class & Section: <b id="rptClass">---</b></p>
+                    </td>
+                    <td align="right">
+                        <img id="rptPhoto" src="" style="width:100px; height:120px; border:2px solid var(--accent-color); object-fit:cover;">
+                    </td>
+                </tr>
+            </table>
+
+            <table class="marks-table">
+                <thead>
+                    <tr>
+                        <th>SUBJECTS</th>
+                        <th>MAX MARKS</th>
+                        <th>THEORY</th>
+                        <th>PRACTICAL</th>
+                        <th>TOTAL</th>
+                        <th>GRADE</th>
+                    </tr>
+                </thead>
+                <tbody id="rptMarksBody"></tbody>
+                <tfoot>
+                    <tr style="background:#f9f9f9; font-weight:bold;">
+                        <td colspan="4" align="right">GRAND TOTAL & PERCENTAGE:</td>
+                        <td id="rptTotal">0</td>
+                        <td id="rptPercentage">0%</td>
+                    </tr>
+                </tfoot>
+            </table>
+
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px;">
+                <div style="border:1px solid #000; padding:10px;">
+                    <p><b>Attendance:</b> <span id="rptAttendance">0/0</span></p>
+                    <p><b>Health Status:</b> Fit & Active</p>
+                </div>
+                <div style="border:1px solid #000; padding:10px;">
+                    <p><b>Class Teacher's Remarks:</b></p>
+                    <p id="rptRemarks" style="font-style:italic;">Excellent performance, keep it up!</p>
+                </div>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; margin-top:100px;">
+                <div style="border-top:1px solid #000; width:150px; text-align:center;">Class Teacher</div>
+                <div style="border-top:1px solid #000; width:150px; text-align:center;">Principal</div>
+                <div style="border-top:1px solid #000; width:150px; text-align:center;">Parent's Sign</div>
+            </div>
+        </div>
+        <div class="no-print text-center mt-4">
+            <button class="btn-royal" onclick="window.print()" style="padding:15px 50px;">Print Official Report Card</button>
+        </div>
+    </div>
+</div>
+
+<script src="menu.js"></script>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyDqDmsMp2eAuHJBcjW-ciO2JcLTXapiIrs",
+  authDomain: "the-lalit-d7472.firebaseapp.com",
+  projectId: "the-lalit-d7472",
+  appId: "1:479237084229:web:31078825739b3c5712ff2c"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// Load Exams for dropdown
+async function loadExams() {
+    const snap = await db.collection('exam_settings').get();
+    const sel = document.getElementById('rptExam');
+    snap.forEach(doc => {
+        sel.innerHTML += `<option value="${doc.id}">${doc.data().examName} - Class ${doc.data().targetClass}</option>`;
+    });
+}
+
+async function generateReport() {
+    const sid = document.getElementById('rptID').value;
+    const examID = document.getElementById('rptExam').value;
+    if(!sid || !examID) return alert("Enter Student ID and Select Exam");
+
+    // 1. Fetch Student Data
+    const sDoc = await db.collection('students').doc(sid).get();
+    if(!sDoc.exists) return alert("Student not found!");
+    const s = sDoc.data();
+
+    // 2. Fetch Exam Config
+    const eDoc = await db.collection('exam_settings').doc(examID).get();
+    const eConfig = eDoc.data();
+
+    // 3. Fetch Marks
+    const mSnap = await db.collection('marks_entry').where("studentID", "==", Number(sid)).where("examID", "==", examID).get();
+    const marksData = {};
+    mSnap.forEach(doc => { marksData[doc.data().subject] = doc.data(); });
+
+    // 4. Calculate Attendance
+    const attSnap = await db.collection('attendance').where("studentID", "==", Number(sid)).get();
+    let present = 0;
+    attSnap.forEach(doc => { if(doc.data().status === "Present") present++; });
+
+    // Populate UI
+    document.getElementById('rptName').innerText = s.name.toUpperCase();
+    document.getElementById('rptFather').innerText = s.father.toUpperCase();
+    document.getElementById('rptClass').innerText = `${s.class} - ${s.section}`;
+    document.getElementById('rptPhoto').src = s.photo || 'https://via.placeholder.com/100';
+    document.getElementById('rptExamTitle').innerText = eConfig.examName.toUpperCase();
+    document.getElementById('rptAttendance').innerText = `${present} Days`;
+
+    // Build Table
+    let bodyHTML = "";
+    let grandTotal = 0;
+    let maxGrand = 0;
+
+    eConfig.subjects.forEach(sub => {
+        const m = marksData[sub.name] || { theory: 0, prac: 0 };
+        const total = (m.theory || 0) + (m.prac || 0);
+        const maxSub = sub.maxTheory + sub.maxPrac;
+        grandTotal += total;
+        maxGrand += maxSub;
+
+        bodyHTML += `
+            <tr>
+                <td align="left"><b>${sub.name}</b></td>
+                <td>${maxSub}</td>
+                <td>${m.theory || 0}</td>
+                <td>${m.prac || 0}</td>
+                <td><b>${total}</b></td>
+                <td class="grade-badge">${calculateGrade(total, maxSub)}</td>
+            </tr>`;
+    });
+
+    document.getElementById('rptMarksBody').innerHTML = bodyHTML;
+    document.getElementById('rptTotal').innerText = `${grandTotal} / ${maxGrand}`;
+    const perc = ((grandTotal / maxGrand) * 100).toFixed(1);
+    document.getElementById('rptPercentage').innerText = perc + "%";
+    
+    document.getElementById('printArea').style.display = "block";
+}
+
+function calculateGrade(marks, max) {
+    const p = (marks / max) * 100;
+    if(p >= 91) return "A1";
+    if(p >= 81) return "A2";
+    if(p >= 71) return "B1";
+    if(p >= 61) return "B2";
+    if(p >= 51) return "C1";
+    if(p >= 41) return "C2";
+    if(p >= 33) return "D";
+    return "E (Needs Improvement)";
+}
+
+window.onload = loadExams;
+</script>
+</body>
+</html>
