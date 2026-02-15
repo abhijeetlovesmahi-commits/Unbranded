@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal | The Lalit International School</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* Landing Page Specific Styling */
+        .portal-bg {
+            min-height: 100vh;
+            background: linear-gradient(rgba(0,35,102,0.8), rgba(0,35,102,0.8)), url('https://images.unsplash.com/photo-1523050853051-f050540c4419?auto=format&fit=crop&w=1350&q=80');
+            background-size: cover;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .login-box {
+            background: var(--bg-light);
+            max-width: 900px;
+            width: 100%;
+            border-radius: 15px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            overflow: hidden;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            border: 3px solid var(--accent-color);
+        }
+        .info-side {
+            background: var(--primary-color);
+            color: white;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .login-side {
+            padding: 40px;
+            background: white;
+        }
+        .role-btn-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .role-btn {
+            padding: 10px;
+            border: 1px solid #ddd;
+            background: white;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 0.8rem;
+            transition: 0.3s;
+        }
+        .role-btn.active {
+            background: var(--primary-color);
+            color: var(--accent-color);
+            border-color: var(--accent-color);
+        }
+        .notice-ticker {
+            background: var(--accent-color);
+            color: var(--primary-color);
+            padding: 10px;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+
+<div class="portal-bg">
+    <div class="login-box">
+        <div class="info-side">
+            <img id="schoolLogo" src="logo.png" style="width: 80px; background: white; border-radius: 50%; padding: 5px; margin-bottom: 20px;">
+            <h2 id="schoolName" style="font-family: 'Cinzel'; color: var(--accent-color); margin-bottom: 10px;">The Lalit</h2>
+            <p style="font-size: 0.9rem; line-height: 1.6; opacity: 0.9;">
+                Welcome to the Imperial Management Portal. Our system ensures 100% transparency and efficient administration for students, parents, and faculty.
+            </p>
+            <div style="margin-top: 30px; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 20px;">
+                <p><i class="fas fa-check-circle text-gold"></i> Academic Excellence</p>
+                <p><i class="fas fa-check-circle text-gold"></i> Digital Fee Treasury</p>
+                <p><i class="fas fa-check-circle text-gold"></i> Real-time Exam Reports</p>
+            </div>
+        </div>
+
+        <div class="login-side">
+            <div class="text-center mb-4">
+                <h3 style="color: var(--primary-color); font-family: 'Cinzel';">Login Portal</h3>
+                <small class="text-muted">Secure Access for Official Registry</small>
+            </div>
+
+            <label class="d-block mb-2 fw-bold small">SELECT YOUR ROLE:</label>
+            <div class="role-btn-group">
+                <button class="role-btn active" onclick="setRole('admin', this)">ADMIN</button>
+                <button class="role-btn" onclick="setRole('account', this)">ACCOUNTANT</button>
+                <button class="role-btn" onclick="setRole('faculty', this)">FACULTY</button>
+                <button class="role-btn" onclick="setRole('student', this)">STUDENT</button>
+            </div>
+
+            <form id="loginForm">
+                <div class="form-group mb-3">
+                    <label>Official Email / ID</label>
+                    <input type="email" id="email" placeholder="admin@thelalit.com" required>
+                </div>
+                <div class="form-group mb-4">
+                    <label>Security Key</label>
+                    <input type="password" id="pass" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn-royal w-100">Authenticate Access</button>
+                <p id="msg" class="text-danger small mt-2 text-center"></p>
+            </form>
+            
+            <div class="text-center mt-4" style="font-size: 0.8rem; color: #888;">
+                <p>&copy; 2026 The Lalit International School. <br> Powered by Imperial Management System.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyDqDmsMp2eAuHJBcjW-ciO2JcLTXapiIrs",
+        authDomain: "the-lalit-d7472.firebaseapp.com",
+        projectId: "the-lalit-d7472",
+        appId: "1:479237084229:web:31078825739b3c5712ff2c"
+    };
+    firebase.initializeApp(firebaseConfig);
+
+    let selectedRole = 'admin'; // Default
+
+    function setRole(role, btn) {
+        selectedRole = role;
+        document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        
+        // Dynamic placeholder change for fun
+        const emailInput = document.getElementById('email');
+        if(role === 'student') emailInput.placeholder = "Student Admission ID";
+        else emailInput.placeholder = role + "@thelalit.com";
+    }
+
+    document.getElementById('loginForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const email = document.getElementById('email').value;
+        const pass = document.getElementById('pass').value;
+        const msg = document.getElementById('msg');
+        const btn = e.target.querySelector('button');
+
+        btn.innerText = "AUTHENTICATING...";
+        btn.disabled = true;
+
+        firebase.auth().signInWithEmailAndPassword(email, pass)
+        .then((userCredential) => {
+            // Save role to localStorage so menu.js can read it
+            localStorage.setItem('userRole', selectedRole);
+            localStorage.setItem('userEmail', email);
+            window.location.href = "index.html"; // Go to dashboard
+        })
+        .catch((error) => {
+            btn.innerText = "Authenticate Access";
+            btn.disabled = false;
+            msg.innerText = "Access Denied: " + error.message;
+        });
+    });
+</script>
+</body>
+</html>
