@@ -3,124 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>New Admission | The Lalit Imperial</title>
+    <title>Admission | Imperial System</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore-compat.js"></script>
+    
     <script src="init.js"></script>
 </head>
 <body>
 
 <div class="wrapper">
+    
     <script src="menu.js"></script>
 
     <div class="main-content">
         <div class="royal-card">
             <h2 class="card-title"><i class="fas fa-user-plus"></i> Student Admission Registry</h2>
-            <p style="color:var(--text-muted); margin-top:-15px; margin-bottom:25px;">Enter the student's legal details to create a permanent record in the Imperial Registry.</p>
-
+            
             <form id="admissionForm">
-                <div class="form-section" style="text-align: center; border: 2px dashed var(--accent); padding: 20px; border-radius: 10px; margin-bottom: 30px; background: #fffcf5;">
-                    <label style="display: block; font-weight: bold; margin-bottom: 10px;">STUDENT PHOTOGRAPH</label>
-                    <input type="file" id="stPhoto" accept="image/*" onchange="previewAndCompress(this)" style="display: none;">
+                <div style="text-align: center; margin-bottom: 30px;">
+                    <input type="file" id="stPhoto" accept="image/*" onchange="previewPhoto(this)" style="display: none;">
                     <div onclick="document.getElementById('stPhoto').click()" style="cursor: pointer;">
-                        <img id="imgPreview" src="https://via.placeholder.com/150x180?text=Click+to+Upload" 
-                             style="width: 130px; height: 160px; border: 3px solid var(--primary); border-radius: 8px; object-fit: cover; background: #fff;">
+                        <img id="imgPreview" src="https://via.placeholder.com/150x180?text=Upload+Photo" 
+                             style="width: 120px; height: 150px; border: 3px solid var(--primary); border-radius: 10px; object-fit: cover;">
                     </div>
-                    <small style="color: #888; display: block; margin-top: 10px;">(Only .jpg, .png allowed | Auto-compressed to 50KB)</small>
+                    <p style="font-size: 0.8rem; color: #666;">Click image to upload student photo</p>
                 </div>
 
-                <h5 style="color:var(--primary); font-family:'Cinzel'; border-left: 5px solid var(--accent); padding-left: 10px; margin-bottom: 20px;">I. Personal Information</h5>
-                <div class="form-grid mb-4">
+                <div class="form-grid">
                     <div class="form-group">
-                        <label>Full Name of Student</label>
-                        <input type="text" id="sName" placeholder="e.g. Rahul Kumar" required>
+                        <label>Student Full Name</label>
+                        <input type="text" id="sName" placeholder="Rahul Kumar" required>
                     </div>
-                    <div class="form-group">
-                        <label>Date of Birth</label>
-                        <input type="date" id="sDob" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Gender</label>
-                        <select id="sGender">
-                            <option value="Male">Male</option>
-                            <option value="Female">Female</option>
-                            <option value="Other">Other</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Aadhar Number</label>
-                        <input type="number" id="sAadhar" placeholder="12 Digit Aadhar" oninput="this.value=this.value.slice(0,12)">
-                    </div>
-                </div>
-
-                <h5 style="color:var(--primary); font-family:'Cinzel'; border-left: 5px solid var(--accent); padding-left: 10px; margin-bottom: 20px;">II. Academic & Facilities</h5>
-                <div class="form-grid mb-4">
                     <div class="form-group">
                         <label>Admission Class</label>
                         <select id="sClass" required>
-                            <option value="">-- Select Class --</option>
+                            <option value="">-- Select --</option>
                             <option value="Nursery">Nursery</option>
-                            <option value="LKG">LKG</option>
-                            <option value="UKG">UKG</option>
-                            <script>for(let i=1; i<=12; i++) document.write(`<option value="${i}">${i}</option>`);</script>
+                            <script>for(let i=1; i<=12; i++) document.write(`<option value="${i}">Class ${i}</option>`);</script>
                         </select>
                     </div>
-                    <div class="form-group">
-                        <label>Section</label>
-                        <select id="sSection"><option value="A">A</option><option value="B">B</option><option value="C">C</option></select>
-                    </div>
-                    <div class="form-group">
-                        <label>Opt for Hostel?</label>
-                        <select id="sHostel"><option value="No">No</option><option value="Yes">Yes</option></select>
-                    </div>
-                    <div class="form-group">
-                        <label>School Transport?</label>
-                        <select id="sTransport" onchange="toggleTransportSlab(this.value)">
-                            <option value="No">No</option><option value="Yes">Yes</option>
-                        </select>
-                    </div>
-                    <div class="form-group" id="slabDiv" style="display: none;">
-                        <label>Bus Distance Slab</label>
-                        <select id="sSlab">
-                            <option value="">-- Choose Distance --</option>
-                            <option value="0-3km">0 - 3 km</option>
-                            <option value="3-6km">3 - 6 km</option>
-                            <option value="6-9km">6 - 9 km</option>
-                            <option value="9km+">Above 9 km</option>
-                        </select>
-                    </div>
-                </div>
-
-                <h5 style="color:var(--primary); font-family:'Cinzel'; border-left: 5px solid var(--accent); padding-left: 10px; margin-bottom: 20px;">III. Guardian Information</h5>
-                <div class="form-grid mb-4">
                     <div class="form-group">
                         <label>Father's Name</label>
-                        <input type="text" id="sFather" placeholder="Mr. Name" required>
+                        <input type="text" id="sFather" required>
                     </div>
                     <div class="form-group">
-                        <label>Mother's Name</label>
-                        <input type="text" id="sMother" placeholder="Mrs. Name" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Primary Mobile Number</label>
-                        <input type="tel" id="sMobile" placeholder="10 Digit Mobile" required oninput="this.value=this.value.slice(0,10)">
-                    </div>
-                    <div class="form-group">
-                        <label>Emergency WhatsApp</label>
-                        <input type="tel" id="sWa" placeholder="WhatsApp Number">
+                        <label>Mobile Number</label>
+                        <input type="tel" id="sMobile" maxlength="10" required>
                     </div>
                 </div>
 
-                <div class="form-group mb-4">
-                    <label>Full Residential Address</label>
-                    <textarea id="sAddress" rows="2" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ddd;" placeholder="Full Address with Landmark..."></textarea>
-                </div>
-
-                <button type="submit" class="btn-royal w-100" id="subBtn">
-                    <i class="fas fa-save"></i> REGISTER STUDENT & GENERATE ID
+                <button type="submit" class="btn-royal" style="width: 100%; margin-top: 30px;">
+                    <i class="fas fa-save"></i> Register Student to New Database
                 </button>
             </form>
         </div>
@@ -128,69 +64,42 @@
 </div>
 
 <script>
-let compressedBase64 = "";
+let photoBase64 = "";
 
-function previewAndCompress(input) {
+function previewPhoto(input) {
     if (input.files && input.files[0]) {
         let reader = new FileReader();
-        reader.onload = function(e) {
-            let img = new Image();
-            img.src = e.target.result;
-            img.onload = function() {
-                let canvas = document.createElement('canvas');
-                canvas.width = 150; canvas.height = 180; // Standard ID size
-                canvas.getContext('2d').drawImage(img, 0, 0, 150, 180);
-                compressedBase64 = canvas.toDataURL('image/jpeg', 0.6); // 60% quality
-                document.getElementById('imgPreview').src = compressedBase64;
-            }
+        reader.onload = (e) => {
+            photoBase64 = e.target.result;
+            document.getElementById('imgPreview').src = photoBase64;
         };
         reader.readAsDataURL(input.files[0]);
     }
 }
 
-function toggleTransportSlab(val) {
-    document.getElementById('slabDiv').style.display = (val === 'Yes') ? 'block' : 'none';
-}
-
 document.getElementById('admissionForm').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const btn = document.getElementById('subBtn');
-    btn.innerText = "Synchronizing with Imperial Registry...";
+    const btn = e.target.querySelector('button');
+    btn.innerText = "Saving to Imperial Registry...";
     btn.disabled = true;
 
-    try {
-        // Auto-Generate Unique ID (Current Year + Serial)
-        const year = new Date().getFullYear();
-        const lastSnap = await db.collection('students').orderBy('uniqueID', 'desc').limit(1).get();
-        const nextID = lastSnap.empty ? Number(year + "0001") : Number(lastSnap.docs[0].data().uniqueID) + 1;
+    const nextID = Date.now().toString().slice(-8); // Temporary Unique ID logic
 
-        const studentData = {
+    try {
+        await db.collection('students').doc(nextID).set({
             uniqueID: nextID,
             name: document.getElementById('sName').value,
-            dob: document.getElementById('sDob').value,
-            gender: document.getElementById('sGender').value,
-            aadhar: document.getElementById('sAadhar').value,
             class: document.getElementById('sClass').value,
-            section: document.getElementById('sSection').value,
-            hostel: document.getElementById('sHostel').value,
-            transport: document.getElementById('sTransport').value,
-            slab: document.getElementById('sSlab').value,
             father: document.getElementById('sFather').value,
-            mother: document.getElementById('sMother').value,
             mobile: document.getElementById('sMobile').value,
-            whatsapp: document.getElementById('sWa').value,
-            address: document.getElementById('sAddress').value,
-            photo: compressedBase64,
+            photo: photoBase64,
             timestamp: Date.now()
-        };
-
-        await db.collection('students').doc(nextID.toString()).set(studentData);
-        alert("🎉 Admission Successful! \nStudent Admission ID: " + nextID);
+        });
+        alert("Success! Student ID: " + nextID);
         location.reload();
     } catch (err) {
-        alert("Error: " + err.message);
+        alert("Database Error: " + err.message);
         btn.disabled = false;
-        btn.innerText = "Try Again";
     }
 });
 </script>
