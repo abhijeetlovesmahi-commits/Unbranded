@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fee Master | The Lalit</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore-compat.js"></script>
+</head>
+<body>
+
+<div class="main-content">
+    <div class="royal-card">
+        <h2 class="card-title"><i class="fas fa-file-invoice-dollar"></i> Fee Structure Configuration</h2>
+        <p style="color: #666; font-size: 0.9rem; margin-bottom: 25px;">Define monthly and annual charges for various classes and transport slabs.</p>
+
+        <div class="form-section">
+            <span class="section-title">Academic Charges (Class-Wise)</span>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Target Class</label>
+                    <select id="feeClass">
+                        <option value="">-- Select Class --</option>
+                        <option value="Nursery">Nursery</option>
+                        <option value="LKG">LKG</option>
+                        <option value="UKG">UKG</option>
+                        <script>for(let i=1; i<=12; i++) document.write(`<option value="${i}">Class ${i}</option>`);</script>
+                    </select>
+                </div>
+                <div class="form-group"><label>Admission Fee (Annual)</label><input type="number" id="fAdm" placeholder="₹"></div>
+                <div class="form-group"><label>Tuition Fee (Monthly)</label><input type="number" id="fTui" placeholder="₹"></div>
+                <div class="form-group"><label>Exam Fee (Annual)</label><input type="number" id="fExam" placeholder="₹"></div>
+                <div class="form-group"><label>Hostel Fee (Monthly)</label><input type="number" id="fHostel" placeholder="₹"></div>
+                <div class="form-group"><label>Misc. Charges (Annual)</label><input type="number" id="fMisc" placeholder="₹"></div>
+            </div>
+            <button class="btn-royal mt-3" onclick="saveAcademicFee()"><i class="fas fa-save"></i> Save Academic Structure</button>
+        </div>
+
+        <div class="form-section" style="border-color: #8e44ad;">
+            <span class="section-title" style="color: #8e44ad;">Transport Policy (Slab-Wise)</span>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Distance Range</label>
+                    <select id="fSlab">
+                        <option value="0-3km">0 - 3 km</option>
+                        <option value="3-6km">3 - 6 km</option>
+                        <option value="6-9km">6 - 9 km</option>
+                        <option value="9km+">Above 9 km</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Monthly Bus Fee</label>
+                    <input type="number" id="fBus" placeholder="₹ Amount">
+                </div>
+            </div>
+            <button class="btn-royal mt-3" style="background:#8e44ad; border-color:#8e44ad;" onclick="saveTransportFee()">
+                <i class="fas fa-bus"></i> Update Transport Slab
+            </button>
+        </div>
+
+        <div class="row mt-5">
+            <div class="col-12 mb-4">
+                <h5 class="section-subtitle"><i class="fas fa-list"></i> Current Fee Registry</h5>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Class</th>
+                                <th>Admission</th>
+                                <th>Tuition (M)</th>
+                                <th>Exam</th>
+                                <th>Hostel (M)</th>
+                                <th>Misc</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="academicTable"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="menu.js"></script>
+<script>
+// --- Firebase Init ---
+const firebaseConfig = {
+  apiKey: "AIzaSyDqDmsMp2eAuHJBcjW-ciO2JcLTXapiIrs",
+  authDomain: "the-lalit-d7472.firebaseapp.com",
+  projectId: "the-lalit-d7472",
+  appId: "1:479237084229:web:31078825739b3c5712ff2c"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// 1. Save Academic Fees
+async function saveAcademicFee() {
+    const cls = document.getElementById('feeClass').value;
+    if(!cls) return alert("Select Class first!");
+
+    const data = {
+        admission: Number(document.getElementById('fAdm').value) || 0,
+        tuition: Number(document.getElementById('fTui').value) || 0,
+        exam: Number(document.getElementById('fExam').value) || 0,
+        hostel: Number(document.getElementById('fHostel').value) || 0,
+        misc: Number(document.getElementById('fMisc').value) || 0
+    };
+
+    await db.collection('fee_master').doc(cls).set(data);
+    alert("Structure Updated for " + cls);
+    loadFeeData();
+}
+
+// 2. Save Transport Fees
+async function saveTransportFee() {
+    const slab = document.getElementById('fSlab').value;
+    const busFee = Number(document.getElementById('fBus').value);
+
+    await db.collection('transport_master').doc(slab).set({ monthly: busFee });
+    alert("Transport Policy Updated for " + slab);
+}
+
+// 3. Load Data into Table
+async function loadFeeData() {
+    const snap = await db.collection('fee_master').get();
+    const tbody = document.getElementById('academicTable');
+    tbody.innerHTML = "";
+    
+    snap.forEach(doc => {
+        const d = doc.data();
+        tbody.innerHTML += `
+            <tr>
+                <td><b>${doc.id}</b></td>
+                <td>₹${d.admission}</td>
+                <td>₹${d.tuition}</td>
+                <td>₹${d.exam}</td>
+                <td>₹${d.hostel}</td>
+                <td>₹${d.misc}</td>
+                <td>
+                    <button class="btn btn-sm btn-danger" onclick="deleteFee('${doc.id}')">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            </tr>`;
+    });
+}
+
+async function deleteFee(id) {
+    if(confirm("Erase fee data for " + id + "?")) {
+        await db.collection('fee_master').doc(id).delete();
+        loadFeeData();
+    }
+}
+
+window.onload = loadFeeData;
+</script>
+</body>
+</html>
