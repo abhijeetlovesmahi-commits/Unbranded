@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ID Card Generator | The Lalit</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore-compat.js"></script>
+    <script src="init.js"></script>
+    <style>
+        .id-card-canvas {
+            width: 320px; height: 500px; background: white;
+            border-radius: 15px; border: 2px solid var(--primary-color);
+            margin: 20px auto; position: relative; overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .id-card-top {
+            background: var(--primary-color); height: 120px;
+            text-align: center; padding-top: 15px; color: white;
+        }
+        .id-photo-frame {
+            width: 120px; height: 140px; border: 4px solid var(--accent-color);
+            margin: -60px auto 10px; background: white; border-radius: 10px;
+            overflow: hidden; position: relative; z-index: 5;
+        }
+        .id-photo-frame img { width: 100%; height: 100%; object-fit: cover; }
+        .id-details { text-align: center; padding: 10px 20px; }
+        .id-details h3 { font-family: 'Cinzel'; color: var(--primary-color); margin-bottom: 5px; }
+        .id-details p { margin: 2px 0; font-size: 0.85rem; color: #444; }
+        .qr-code { width: 80px; height: 80px; margin: 15px auto; }
+        .id-footer {
+            background: var(--primary-color); color: var(--accent-color);
+            position: absolute; bottom: 0; width: 100%;
+            padding: 8px 0; text-align: center; font-weight: bold; font-size: 0.75rem;
+        }
+        @media print { .no-print { display: none; } }
+    </style>
+</head>
+<body>
+
+<div class="main-content">
+    <div class="royal-card no-print">
+        <h2 class="card-title"><i class="fas fa-id-card"></i> Imperial ID Generator</h2>
+        <div class="form-grid">
+            <div class="form-group">
+                <label>Student Admission ID</label>
+                <input type="number" id="idInput" placeholder="Enter ID (e.g. 2026001)">
+            </div>
+            <div class="form-group" style="display:flex; align-items:flex-end;">
+                <button class="btn-royal" onclick="generateID()"><i class="fas fa-magic"></i> Create Card</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="idCardArea" style="display:none;">
+        <div class="id-card-canvas" id="printableCard">
+            <div class="id-card-top">
+                <img src="logo.png" style="width: 45px; background:white; border-radius:50%; padding:2px;">
+                <p style="font-family:'Cinzel'; font-size:0.7rem; margin-top:5px; letter-spacing:1px;">THE LALIT INTERNATIONAL</p>
+                <p style="font-size:0.5rem; opacity:0.8;">SESSION 2026-27</p>
+            </div>
+            <div class="id-photo-frame">
+                <img id="idPhoto" src="">
+            </div>
+            <div class="id-details">
+                <h3 id="idName">NAME HERE</h3>
+                <p><b>CLASS:</b> <span id="idClass">--</span></p>
+                <p><b>FATHER:</b> <span id="idFather">--</span></p>
+                <p><b>MOBILE:</b> <span id="idPhone">--</span></p>
+                
+                <img id="idQR" class="qr-code" src="">
+                <p style="font-size:0.6rem; color:#888;">Unique ID: <span id="idUID">--</span></p>
+            </div>
+            <div class="id-footer">OFFICIAL STUDENT IDENTITY</div>
+        </div>
+        <div class="text-center mt-3 no-print">
+            <button class="btn-royal" onclick="window.print()">Print ID Card</button>
+        </div>
+    </div>
+</div>
+
+<script src="menu.js"></script>
+<script>
+async function generateID() {
+    const uid = document.getElementById('idInput').value;
+    if(!uid) return alert("Please enter Student ID!");
+
+    const doc = await db.collection('students').doc(uid).get();
+    if(!doc.exists) return alert("Student not found in Registry!");
+
+    const s = doc.data();
+
+    document.getElementById('idName').innerText = s.name.toUpperCase();
+    document.getElementById('idClass').innerText = s.class + "-" + (s.section || 'A');
+    document.getElementById('idFather').innerText = s.father;
+    document.getElementById('idPhone').innerText = s.mobile;
+    document.getElementById('idUID').innerText = s.uniqueID;
+    document.getElementById('idPhoto').src = s.photo || 'https://via.placeholder.com/150';
+
+    // Generate QR (Contains Name, Class and ID)
+    const qrData = `Student:${s.name}|ID:${s.uniqueID}|School:TheLalit`;
+    document.getElementById('idQR').src = `https://chart.googleapis.com/chart?chs=150x150&cht=qr&chl=${encodeURIComponent(qrData)}&choe=UTF-8`;
+
+    document.getElementById('idCardArea').style.display = 'block';
+}
+</script>
+</body>
+</html>
