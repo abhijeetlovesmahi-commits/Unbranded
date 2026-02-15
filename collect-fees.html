@@ -3,26 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fee Treasury | The Lalit Imperial</title>
+    <title>Fees | Imperial Treasury</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore-compat.js"></script>
     <script src="init.js"></script>
-    <style>
-        .search-box { position: relative; }
-        #searchSuggestions {
-            position: absolute; width: 100%; background: #fff; z-index: 1000;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.1); border-radius: 8px; display: none;
-            max-height: 250px; overflow-y: auto; border: 1px solid #ddd;
-        }
-        .suggest-item { padding: 12px; cursor: pointer; border-bottom: 1px solid #eee; transition: 0.2s; }
-        .suggest-item:hover { background: #fdf9f0; color: var(--primary); }
-        .fee-pill {
-            display: inline-block; padding: 10px 15px; background: #e8f4fd;
-            border-radius: 8px; margin-right: 10px; border-left: 4px solid var(--primary);
-        }
-    </style>
 </head>
 <body>
 
@@ -31,173 +17,89 @@
 
     <div class="main-content">
         <div class="royal-card">
-            <h2 class="card-title"><i class="fas fa-cash-register"></i> Imperial Fee Treasury</h2>
+            <h2 class="card-title"><i class="fas fa-cash-register"></i> Fee Treasury Portal</h2>
             
             <div class="form-grid">
-                <div class="form-group search-box">
-                    <label>Locate Student (Name or ID)</label>
-                    <input type="text" id="stInput" placeholder="Type name to find student..." oninput="liveSearch()">
-                    <div id="searchSuggestions"></div>
+                <div class="form-group" style="position:relative;">
+                    <label>Find Student (Name/ID)</label>
+                    <input type="text" id="stSearch" placeholder="Search..." oninput="searchStudent()">
+                    <div id="results" style="position:absolute; width:100%; background:white; z-index:10; box-shadow:0 5px 10px rgba(0,0,0,0.1); border-radius:5px; display:none;"></div>
                 </div>
-
                 <div class="form-group">
-                    <label>Current Monthly Billing</label>
-                    <div id="billDisplay" style="padding:12px; background:var(--bg-light); border-radius:8px; font-weight:bold; color:var(--primary);">
-                        Waiting for student selection...
-                    </div>
+                    <label>Billing Summary</label>
+                    <div id="billInfo" style="padding:12px; background:var(--bg-light); border-radius:8px; font-weight:bold; color:var(--primary);">Select a student...</div>
                 </div>
             </div>
 
-            <div id="paymentPanel" style="display: none; margin-top: 30px; animation: fadeIn 0.5s;">
-                <div style="background: var(--bg-light); padding: 20px; border-radius: 12px; border-left: 5px solid var(--accent); margin-bottom: 25px;">
-                    <h4 style="margin:0; color:var(--primary);"><i class="fas fa-user-circle"></i> <span id="activeName"></span></h4>
-                    <small id="activeDetails" style="color:#666;"></small>
+            <div id="payArea" style="display:none; margin-top:30px;">
+                <div class="form-section" style="background:var(--bg-light); border-left:5px solid var(--accent); padding:20px;">
+                    <h4 id="activeName" style="margin:0; color:var(--primary);"></h4>
+                    <p id="activeDetails" style="font-size:0.8rem; margin:5px 0; color:#666;"></p>
                 </div>
 
-                <div class="form-section">
-                    <span class="section-title">Record Payment</span>
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label>For the Month of</label>
-                            <select id="pMonth">
-                                <option value="April">April</option><option value="May">May</option><option value="June">June</option>
-                                <option value="July">July</option><option value="August">August</option><option value="September">September</option>
-                                <option value="October">October</option><option value="November">November</option><option value="December">December</option>
-                                <option value="January">January</option><option value="February">February</option><option value="March">March</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Amount (INR)</label>
-                            <input type="number" id="pAmount" placeholder="Enter Amount">
-                        </div>
-                        <div class="form-group">
-                            <label>Mode of Payment</label>
-                            <select id="pMode">
-                                <option value="Cash">Cash</option>
-                                <option value="Online / UPI">Online / UPI</option>
-                                <option value="Cheque">Cheque</option>
-                            </select>
-                        </div>
+                <div class="form-grid mt-4">
+                    <div class="form-group">
+                        <label>For Month</label>
+                        <select id="pMonth">
+                            <option value="April">April</option><option value="May">May</option><script>const months = ["June","July","August","September","October","November","December","January","February","March"]; months.forEach(m => document.write(`<option value="${m}">${m}</option>`));</script>
+                        </select>
                     </div>
-                    <button class="btn-royal w-100 mt-4" onclick="processPayment()"><i class="fas fa-check-double"></i> Authenticate & Save Transaction</button>
+                    <div class="form-group">
+                        <label>Amount (₹)</label>
+                        <input type="number" id="pAmount">
+                    </div>
                 </div>
-            </div>
-
-            <div id="historyPanel" style="display:none; margin-top: 30px;">
-                <h5 style="color:var(--primary); font-family:'Cinzel';"><i class="fas fa-history"></i> Recent Payments</h5>
-                <div class="table-responsive">
-                    <table>
-                        <thead>
-                            <tr><th>Date</th><th>Month</th><th>Amount</th><th>Mode</th><th>Status</th></tr>
-                        </thead>
-                        <tbody id="historyBody"></tbody>
-                    </table>
-                </div>
+                <button class="btn-royal w-100 mt-4" onclick="saveFee()"><i class="fas fa-check-circle"></i> Authenticate Payment</button>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-let activeStudent = null;
+let selectedStudent = null;
 
-async function liveSearch() {
-    const val = document.getElementById('stInput').value.toLowerCase();
-    const suggBox = document.getElementById('searchSuggestions');
-    if(val.length < 2) { suggBox.style.display = 'none'; return; }
+async function searchStudent() {
+    const val = document.getElementById('stSearch').value.toLowerCase();
+    const resDiv = document.getElementById('results');
+    if(val.length < 2) { resDiv.style.display = 'none'; return; }
 
     const snap = await db.collection('students').get();
     let html = "";
     snap.forEach(doc => {
         const s = doc.data();
         if(s.name.toLowerCase().includes(val) || s.uniqueID.toString().includes(val)) {
-            html += `<div class="suggest-item" onclick='selectStudent(${JSON.stringify(s)})'>
-                <b>${s.name.toUpperCase()}</b> (${s.uniqueID}) - Class ${s.class}
-            </div>`;
+            html += `<div style="padding:10px; border-bottom:1px solid #eee; cursor:pointer;" onclick='selectStudent(${JSON.stringify(s)})'><b>${s.name}</b> (${s.uniqueID})</div>`;
         }
     });
-    suggBox.innerHTML = html;
-    suggBox.style.display = html ? 'block' : 'none';
+    resDiv.innerHTML = html;
+    resDiv.style.display = html ? 'block' : 'none';
 }
 
-async function selectStudent(s) {
-    activeStudent = s;
-    document.getElementById('searchSuggestions').style.display = 'none';
-    document.getElementById('stInput').value = s.name.toUpperCase();
-    
-    // UI Update
+function selectStudent(s) {
+    selectedStudent = s;
+    document.getElementById('results').style.display = 'none';
+    document.getElementById('stSearch').value = s.name;
+    document.getElementById('payArea').style.display = 'block';
     document.getElementById('activeName').innerText = s.name.toUpperCase();
-    document.getElementById('activeDetails').innerText = `ID: ${s.uniqueID} | Father: ${s.father} | Class: ${s.class}-${s.section}`;
-    document.getElementById('paymentPanel').style.display = 'block';
-
-    // AI Fee Calculation Logic
-    const feeSnap = await db.collection('fee_master').doc(s.class).get();
-    let tuition = 0;
-    if(feeSnap.exists) tuition = Number(feeSnap.data().tuition || 0);
-
-    let busFee = 0;
-    if(s.transport === 'Yes' && s.slab) {
-        const busSnap = await db.collection('transport_master').doc(s.slab).get();
-        if(busSnap.exists) busFee = Number(busSnap.data().monthly || 0);
-    }
-
-    const total = tuition + busFee;
-    document.getElementById('billDisplay').innerHTML = `
-        <span class="fee-pill">Tuition: ₹${tuition}</span>
-        <span class="fee-pill">Bus: ₹${busFee}</span>
-        <span style="float:right; font-size:1.2rem;">Total: ₹${total}</span>
-    `;
-    document.getElementById('pAmount').value = total;
-
-    loadHistory(s.uniqueID);
+    document.getElementById('activeDetails').innerText = `ID: ${s.uniqueID} | Class: ${s.class} | Father: ${s.father}`;
 }
 
-async function loadHistory(id) {
-    const snap = await db.collection('fee_transactions').where("studentID", "==", Number(id)).orderBy('timestamp', 'desc').limit(5).get();
-    const tbody = document.getElementById('historyBody');
-    tbody.innerHTML = "";
-    if(snap.empty) {
-        document.getElementById('historyPanel').style.display = 'none';
-        return;
-    }
-    document.getElementById('historyPanel').style.display = 'block';
-    snap.forEach(doc => {
-        const d = doc.data();
-        tbody.innerHTML += `<tr>
-            <td>${d.date}</td>
-            <td>${d.month}</td>
-            <td><b>₹${d.amount}</b></td>
-            <td>${d.mode}</td>
-            <td><span class="badge badge-paid">SUCCESS</span></td>
-        </tr>`;
-    });
-}
-
-async function processPayment() {
-    if(!activeStudent) return;
+async function saveFee() {
+    if(!selectedStudent) return;
     const amt = document.getElementById('pAmount').value;
     const month = document.getElementById('pMonth').value;
-    const mode = document.getElementById('pMode').value;
-    
-    if(!amt || amt <= 0) return alert("Please enter a valid amount!");
+    if(!amt) return alert("Enter amount!");
 
-    const txnData = {
-        studentID: activeStudent.uniqueID,
-        studentName: activeStudent.name,
+    await db.collection('fee_transactions').add({
+        studentID: selectedStudent.uniqueID,
+        studentName: selectedStudent.name,
         amount: Number(amt),
         month: month,
-        mode: mode,
         date: new Date().toLocaleDateString('en-GB'),
         timestamp: Date.now()
-    };
-
-    try {
-        await db.collection('fee_transactions').add(txnData);
-        alert("Treasury Authenticated! \nPayment Received for " + month);
-        location.reload();
-    } catch (e) {
-        alert("Transaction Error: " + e.message);
-    }
+    });
+    alert("Payment Received!");
+    location.reload();
 }
 </script>
 </body>
