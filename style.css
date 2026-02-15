@@ -1,0 +1,132 @@
+/* --- THE LALIT INTERNATIONAL SCHOOL - GLOBAL THEME --- */
+:root {
+    --primary-color: #002366;    /* Royal Blue */
+    --accent-color: #D4AF37;     /* Imperial Gold */
+    --bg-light: #FDFBF0;         /* Parchment Paper */
+    --white: #ffffff;
+    --danger: #e74c3c;
+    --success: #27ae60;
+    --sidebar-width: 280px;
+    --font-main: 'Poppins', sans-serif;
+    --font-heading: 'Cinzel', serif;
+}
+
+body {
+    background-color: var(--bg-light);
+    font-family: var(--font-main);
+    margin: 0;
+    overflow-x: hidden;
+}
+
+/* --- Reusable Layout Components --- */
+.dashboard-container {
+    display: flex;
+    min-height: 100vh;
+}
+
+.main-content {
+    flex-grow: 1;
+    padding: 30px;
+    margin-left: var(--sidebar-width);
+    transition: 0.3s;
+}
+
+/* --- Imperial Card Style --- */
+.royal-card {
+    background: var(--white);
+    border-radius: 12px;
+    border-top: 5px solid var(--primary-color);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    padding: 25px;
+    margin-bottom: 25px;
+    border-left: 1px solid #eee;
+    border-right: 1px solid #eee;
+}
+
+.card-title {
+    font-family: var(--font-heading);
+    color: var(--primary-color);
+    border-bottom: 2px double var(--accent-color);
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* --- Form Design (Accurate & Efficient) --- */
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #555;
+    margin-bottom: 5px;
+}
+
+input, select, textarea {
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    transition: 0.3s;
+}
+
+input:focus {
+    border-color: var(--primary-color);
+    outline: none;
+    box-shadow: 0 0 5px rgba(0,35,102,0.2);
+}
+
+/* --- Buttons --- */
+.btn-royal {
+    background: var(--primary-color);
+    color: var(--accent-color);
+    border: 1px solid var(--accent-color);
+    padding: 12px 25px;
+    font-weight: bold;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: 0.3s;
+}
+
+.btn-royal:hover {
+    background: var(--accent-color);
+    color: var(--primary-color);
+}
+
+/* Responsive Table */
+.table-responsive {
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th {
+    background: var(--primary-color);
+    color: var(--accent-color);
+    padding: 15px;
+    text-align: left;
+}
+
+td {
+    padding: 12px;
+    border-bottom: 1px solid #eee;
+}
+
+@media (max-width: 992px) {
+    .main-content { margin-left: 0; }
+}
