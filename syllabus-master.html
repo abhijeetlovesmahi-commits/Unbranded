@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Syllabus Master | The Lalit</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore-compat.js"></script>
+    <style>
+        .chapter-input-group {
+            display: flex; gap: 10px; margin-bottom: 10px; 
+            background: #fff; padding: 10px; border-radius: 5px; border: 1px solid #ddd;
+        }
+        .syllabus-display-card {
+            border-left: 5px solid var(--accent-color);
+            margin-bottom: 15px; padding: 15px; background: white;
+        }
+    </style>
+</head>
+<body>
+
+<div class="main-content">
+    <div class="royal-card">
+        <h2 class="card-title"><i class="fas fa-book"></i> Syllabus & Curriculum Master</h2>
+
+        <div class="form-grid">
+            <div class="form-section">
+                <span class="section-title">Define New Syllabus</span>
+                <div class="form-group mb-3">
+                    <label>Select Class</label>
+                    <select id="sylClass" onchange="loadSubjectsForClass()">
+                        <option value="">-- Choose Class --</option>
+                        <script>for(let i=1; i<=12; i++) document.write(`<option value="${i}">Class ${i}</option>`);</script>
+                        <option value="Nursery">Nursery</option><option value="LKG">LKG</option><option value="UKG">UKG</option>
+                    </select>
+                </div>
+                <div class="form-group mb-3">
+                    <label>Subject</label>
+                    <select id="sylSubject">
+                        <option value="">-- Select Subject --</option>
+                        <option value="English">English</option>
+                        <option value="Hindi">Hindi</option>
+                        <option value="Mathematics">Mathematics</option>
+                        <option value="Science">Science</option>
+                        <option value="Social Science">Social Science</option>
+                        <option value="Sanskrit">Sanskrit</option>
+                        <option value="Computer">Computer</option>
+                    </select>
+                </div>
+                <div class="form-group mb-3">
+                    <label>Target Exam</label>
+                    <select id="sylExam">
+                        <option value="Periodic Test-I">Periodic Test-I</option>
+                        <option value="Half Yearly">Half Yearly</option>
+                        <option value="Periodic Test-II">Periodic Test-II</option>
+                        <option value="Annual">Annual Exam</option>
+                    </select>
+                </div>
+
+                <div id="chapterArea">
+                    <label>Chapters / Topics</label>
+                    <div class="chapter-input-group">
+                        <input type="text" class="chapter-name" placeholder="Chapter 1: The Living World">
+                        <button class="btn-royal" style="background:var(--danger); border:none;" onclick="this.parentElement.remove()">×</button>
+                    </div>
+                </div>
+                <button class="btn-royal mt-2" style="font-size: 0.7rem; background:#34495e;" onclick="addChapterRow()">+ Add Chapter</button>
+                
+                <button class="btn-royal w-100 mt-4" onclick="saveSyllabus()"><i class="fas fa-save"></i> Upload Syllabus</button>
+            </div>
+
+            <div class="form-section">
+                <span class="section-title">Current Curriculum View</span>
+                <div class="mb-3">
+                    <select id="viewClass" onchange="fetchSyllabusList()" style="width: 100%;">
+                        <option value="">Filter by Class to View</option>
+                        <script>for(let i=1; i<=12; i++) document.write(`<option value="${i}">Class ${i}</option>`);</script>
+                    </select>
+                </div>
+                <div id="syllabusListArea">
+                    <p class="text-center text-muted">Select a class to see defined syllabus.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="menu.js"></script>
+<script>
+// --- Firebase Config ---
+const firebaseConfig = {
+  apiKey: "AIzaSyDqDmsMp2eAuHJBcjW-ciO2JcLTXapiIrs",
+  authDomain: "the-lalit-d7472.firebaseapp.com",
+  projectId: "the-lalit-d7472",
+  appId: "1:479237084229:web:31078825739b3c5712ff2c"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+function addChapterRow() {
+    const div = document.createElement('div');
+    div.className = 'chapter-input-group';
+    div.innerHTML = `
+        <input type="text" class="chapter-name" placeholder="Next Chapter Name">
+        <button class="btn-royal" style="background:var(--danger); border:none;" onclick="this.parentElement.remove()">×</button>
+    `;
+    document.getElementById('chapterArea').appendChild(div);
+}
+
+async function saveSyllabus() {
+    const cls = document.getElementById('sylClass').value;
+    const sub = document.getElementById('sylSubject').value;
+    const exam = document.getElementById('sylExam').value;
+
+    if(!cls || !sub) return alert("Class and Subject are required!");
+
+    const chapters = [];
+    document.querySelectorAll('.chapter-name').forEach(input => {
+        if(input.value) chapters.push(input.value);
+    });
+
+    // Unique ID: Class_Subject_Exam
+    const docID = `${cls}_${sub}_${exam}`.replace(/\s+/g, '-');
+
+    await db.collection('syllabus_master').doc(docID).set({
+        targetClass: cls,
+        subject: sub,
+        exam: exam,
+        chapters: chapters,
+        timestamp: Date.now()
+    });
+
+    alert(`Syllabus for ${sub} (${cls}) saved successfully!`);
+    fetchSyllabusList();
+}
+
+async function fetchSyllabusList() {
+    const cls = document.getElementById('viewClass').value;
+    const listArea = document.getElementById('syllabusListArea');
+    if(!cls) return;
+
+    listArea.innerHTML = "Fetching...";
+
+    const snap = await db.collection('syllabus_master')
+                         .where("targetClass", "==", cls)
+                         .get();
+
+    if(snap.empty) {
+        listArea.innerHTML = "<p>No syllabus defined for this class.</p>";
+        return;
+    }
+
+    listArea.innerHTML = "";
+    snap.forEach(doc => {
+        const d = doc.data();
+        let chapterList = d.chapters.map(c => `<li>${c}</li>`).join('');
+        listArea.innerHTML += `
+            <div class="royal-card syllabus-display-card">
+                <h5 style="color:var(--primary-color); border-bottom:1px solid #ddd; padding-bottom:5px;">
+                    ${d.subject} - <small>${d.exam}</small>
+                </h5>
+                <ul style="font-size: 0.85rem; padding-left: 20px; color: #555;">${chapterList}</ul>
+                <button class="btn-royal" style="padding:2px 8px; font-size:0.6rem; background:var(--danger); border:none;" onclick="deleteSyllabus('${doc.id}')">Delete</button>
+            </div>`;
+    });
+}
+
+async function deleteSyllabus(id) {
+    if(confirm("Erase this syllabus entry?")) {
+        await db.collection('syllabus_master').doc(id).delete();
+        fetchSyllabusList();
+    }
+}
+</script>
+</body>
+</html>
