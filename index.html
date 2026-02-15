@@ -2,12 +2,15 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Dashboard | Imperial</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Imperial Dashboard | Management System</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore-compat.js"></script>
     <script src="init.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
@@ -15,15 +18,112 @@
     <script src="menu.js"></script>
 
     <div class="main-content">
-        <div class="royal-card">
-            <h2 class="card-title">Imperial Control Center</h2>
-            <p>Welcome to your new Fresh Database. If you see old data, please clear your browser cache (Ctrl+F5).</p>
-            
-            <div class="form-grid">
-                </div>
+        <div class="royal-card" style="padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-top: none; border-bottom: 3px solid var(--accent); margin-bottom: 20px;">
+            <div>
+                <h4 style="margin:0; font-family:'Cinzel'; color:var(--primary); letter-spacing:1px;">Control Center</h4>
+                <small style="color:var(--text-muted);">Imperial Management Registry Active</small>
+            </div>
+            <div style="text-align: right;">
+                <b id="liveDate" style="color:var(--primary); display:block; font-size:0.9rem;"></b>
+                <span class="badge badge-paid">Server Synced</span>
+            </div>
         </div>
-    </div>
-</div>
+
+        <div class="form-grid mb-4">
+            <div class="royal-card text-center" style="border-top-color: #3498db;">
+                <i class="fas fa-user-graduate fa-2x mb-2" style="color:#3498db;"></i>
+                <p class="text-muted small">TOTAL STUDENTS</p>
+                <h2 id="statStudents" style="margin:0;">0</h2>
+            </div>
+            <div class="royal-card text-center" style="border-top-color: var(--success);">
+                <i class="fas fa-coins fa-2x mb-2" style="color:var(--success);"></i>
+                <p class="text-muted small">TODAY'S COLLECTION</p>
+                <h2 id="statCash" style="margin:0;">₹0</h2>
+            </div>
+            <div class="royal-card text-center" style="border-top-color: #e67e22;">
+                <i class="fas fa-user-check fa-2x mb-2" style="color:#e67e22;"></i>
+                <p class="text-muted small">PRESENT TODAY</p>
+                <h2 id="statAttendance" style="margin:0;">0</h2>
+            </div>
+            <div class="royal-card text-center" style="border-top-color: var(--danger);">
+                <i class="fas fa-file-invoice-dollar fa-2x mb-2" style="color:var(--danger);"></i>
+                <p class="text-muted small">FEE DEFAULTERS</p>
+                <h2 id="statPending" style="margin:0;">0</h2>
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 30px;">
+            <div class="royal-card">
+                <h3 class="card-title"><i class="fas fa-chart-line"></i> Revenue Intelligence</h3>
+                <canvas id="revenueChart" style="max-height: 280px;"></canvas>
+            </div>
+
+            <div class="royal-card">
+                <h3 class="card-title"><i class="fas fa-bolt"></i> Quick Launch</h3>
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <button class="btn-royal" onclick="location.href='collect-fees.html'"><i class="fas fa-plus"></i> Collect Fee</button>
+                    <button class="btn-royal" style="background:#2ecc71; border-color:#2ecc71;" onclick="location.href='add-student.html'"><i class="fas fa-user-plus"></i> New Admission</button>
+                    <button class="btn-royal" style="background:#8e44ad; border-color:#8e44ad;" onclick="location.href='id-card.html'"><i class="fas fa-id-card"></i> Generate ID Card</button>
+                </div>
+                <hr style="margin:20px 0; opacity:0.1;">
+                <div style="background:var(--bg-light); padding:15px; border-radius:10px; border-left:4px solid var(--accent);">
+                    <h5 style="margin:0 0 5px 0; font-size:0.85rem; color:var(--primary);">Academic Notification</h5>
+                    <p style="font-size:0.75rem; color:#666; margin:0;">Cloud Database successfully synced with the Imperial Server.</p>
+                </div>
+            </div>
+        </div>
+    </div> </div> <script>
+window.onload = function() {
+    document.getElementById('liveDate').innerText = new Date().toDateString();
+    
+    // Auto-update dashboard from Firestore
+    fetchDashboardData();
+    renderGraph();
+};
+
+async function fetchDashboardData() {
+    // 1. Student Count
+    db.collection('students').onSnapshot(snap => {
+        document.getElementById('statStudents').innerText = snap.size;
+    });
+
+    // 2. Today's Fees
+    const today = new Date().toLocaleDateString('en-GB');
+    db.collection('fee_transactions').where('date', '==', today).onSnapshot(snap => {
+        let total = 0;
+        snap.forEach(doc => total += Number(doc.data().amount || 0));
+        document.getElementById('statCash').innerText = "₹" + total.toLocaleString('en-IN');
+    });
+
+    // 3. Attendance Logic
+    db.collection('attendance').where('date', '==', getTodayDate()).where('status', '==', 'Present').onSnapshot(snap => {
+        document.getElementById('statAttendance').innerText = snap.size;
+    });
+}
+
+function renderGraph() {
+    const ctx = document.getElementById('revenueChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+            datasets: [{
+                label: 'Collection (₹)',
+                data: [5000, 12000, 8000, 20000, 15000, 25000],
+                borderColor: '#002366',
+                backgroundColor: 'rgba(0,35,102,0.05)',
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } }
+        }
+    });
+}
+</script>
 
 </body>
 </html>
