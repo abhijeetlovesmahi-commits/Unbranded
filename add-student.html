@@ -3,126 +3,134 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>New Admission | The Lalit</title>
+    <title>New Admission | The Lalit Imperial</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore-compat.js"></script>
+    <script src="init.js"></script>
 </head>
 <body>
 
-<div class="main-content">
-    <div class="royal-card">
-        <h2 class="card-title"><i class="fas fa-user-plus"></i> Student Admission Registry</h2>
-        
-        <form id="admissionForm">
-            <div class="form-section mb-4" style="text-align:center;">
-                <label>Student Official Photo</label><br>
-                <input type="file" id="stPhoto" accept="image/*" onchange="previewImg(this)" style="display:none;">
-                <div onclick="document.getElementById('stPhoto').click()" style="cursor:pointer;">
-                    <img id="imgPreview" src="https://via.placeholder.com/150x180?text=Upload+Photo" 
-                         style="width:130px; height:160px; border:2px solid var(--accent-color); object-fit:cover;">
-                </div>
-            </div>
+<div class="wrapper">
+    <script src="menu.js"></script>
 
-            <h5 class="section-subtitle">I. Personal Details</h5>
-            <div class="form-grid mb-4">
-                <div class="form-group">
-                    <label>Full Name</label>
-                    <input type="text" id="sName" placeholder="As per Aadhar" required>
-                </div>
-                <div class="form-group">
-                    <label>Date of Birth</label>
-                    <input type="date" id="sDob" required>
-                </div>
-                <div class="form-group">
-                    <label>Gender</label>
-                    <select id="sGender">
-                        <option value="Male">Male</option>
-                        <option value="Female">Female</option>
-                        <option value="Other">Other</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Aadhar Number</label>
-                    <input type="number" id="sAadhar" placeholder="12 Digit No." oninput="this.value=this.value.slice(0,12)">
-                </div>
-            </div>
+    <div class="main-content">
+        <div class="royal-card">
+            <h2 class="card-title"><i class="fas fa-user-plus"></i> Student Admission Registry</h2>
+            <p style="color:var(--text-muted); margin-top:-15px; margin-bottom:25px;">Enter the student's legal details to create a permanent record in the Imperial Registry.</p>
 
-            <h5 class="section-subtitle">II. Academic & Facilities</h5>
-            <div class="form-grid mb-4">
-                <div class="form-group">
-                    <label>Admission Class</label>
-                    <select id="sClass" required>
-                        <option value="">Select Class</option>
-                        <option value="Nursery">Nursery</option>
-                        <option value="LKG">LKG</option>
-                        <option value="UKG">UKG</option>
-                        <script>for(let i=1; i<=12; i++) document.write(`<option value="${i}">Class ${i}</option>`);</script>
-                    </select>
+            <form id="admissionForm">
+                <div class="form-section" style="text-align: center; border: 2px dashed var(--accent); padding: 20px; border-radius: 10px; margin-bottom: 30px; background: #fffcf5;">
+                    <label style="display: block; font-weight: bold; margin-bottom: 10px;">STUDENT PHOTOGRAPH</label>
+                    <input type="file" id="stPhoto" accept="image/*" onchange="previewAndCompress(this)" style="display: none;">
+                    <div onclick="document.getElementById('stPhoto').click()" style="cursor: pointer;">
+                        <img id="imgPreview" src="https://via.placeholder.com/150x180?text=Click+to+Upload" 
+                             style="width: 130px; height: 160px; border: 3px solid var(--primary); border-radius: 8px; object-fit: cover; background: #fff;">
+                    </div>
+                    <small style="color: #888; display: block; margin-top: 10px;">(Only .jpg, .png allowed | Auto-compressed to 50KB)</small>
                 </div>
-                <div class="form-group">
-                    <label>Section</label>
-                    <select id="sSection"><option value="A">A</option><option value="B">B</option></select>
-                </div>
-                <div class="form-group">
-                    <label>Hostel Facility</label>
-                    <select id="sHostel">
-                        <option value="No">No</option>
-                        <option value="Yes">Yes (Apply Hostel Charges)</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Transport Service</label>
-                    <select id="sTransport" onchange="toggleTransport()">
-                        <option value="No">No</option>
-                        <option value="Yes">Yes (Apply Slab Rates)</option>
-                    </select>
-                </div>
-                <div class="form-group" id="slabDiv" style="display:none;">
-                    <label>Distance Slab</label>
-                    <select id="sSlab">
-                        <option value="">Select Slab</option>
-                        <option value="0-3km">0 - 3 km</option>
-                        <option value="3-6km">3 - 6 km</option>
-                        <option value="6-9km">6 - 9 km</option>
-                        <option value="9km+">Above 9 km</option>
-                    </select>
-                </div>
-            </div>
 
-            <h5 class="section-subtitle">III. Guardian Details</h5>
-            <div class="form-grid mb-4">
-                <div class="form-group"><label>Father's Name</label><input type="text" id="sFather" required></div>
-                <div class="form-group"><label>Mother's Name</label><input type="text" id="sMother"></div>
-                <div class="form-group"><label>Primary Contact</label><input type="tel" id="sPhone" required></div>
-            </div>
+                <h5 style="color:var(--primary); font-family:'Cinzel'; border-left: 5px solid var(--accent); padding-left: 10px; margin-bottom: 20px;">I. Personal Information</h5>
+                <div class="form-grid mb-4">
+                    <div class="form-group">
+                        <label>Full Name of Student</label>
+                        <input type="text" id="sName" placeholder="e.g. Rahul Kumar" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Date of Birth</label>
+                        <input type="date" id="sDob" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Gender</label>
+                        <select id="sGender">
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Aadhar Number</label>
+                        <input type="number" id="sAadhar" placeholder="12 Digit Aadhar" oninput="this.value=this.value.slice(0,12)">
+                    </div>
+                </div>
 
-            <div class="form-group mb-4">
-                <label>Residential Address</label>
-                <textarea id="sAddress" rows="2" placeholder="Full Address..."></textarea>
-            </div>
+                <h5 style="color:var(--primary); font-family:'Cinzel'; border-left: 5px solid var(--accent); padding-left: 10px; margin-bottom: 20px;">II. Academic & Facilities</h5>
+                <div class="form-grid mb-4">
+                    <div class="form-group">
+                        <label>Admission Class</label>
+                        <select id="sClass" required>
+                            <option value="">-- Select Class --</option>
+                            <option value="Nursery">Nursery</option>
+                            <option value="LKG">LKG</option>
+                            <option value="UKG">UKG</option>
+                            <script>for(let i=1; i<=12; i++) document.write(`<option value="${i}">${i}</option>`);</script>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Section</label>
+                        <select id="sSection"><option value="A">A</option><option value="B">B</option><option value="C">C</option></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Opt for Hostel?</label>
+                        <select id="sHostel"><option value="No">No</option><option value="Yes">Yes</option></select>
+                    </div>
+                    <div class="form-group">
+                        <label>School Transport?</label>
+                        <select id="sTransport" onchange="toggleTransportSlab(this.value)">
+                            <option value="No">No</option><option value="Yes">Yes</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="slabDiv" style="display: none;">
+                        <label>Bus Distance Slab</label>
+                        <select id="sSlab">
+                            <option value="">-- Choose Distance --</option>
+                            <option value="0-3km">0 - 3 km</option>
+                            <option value="3-6km">3 - 6 km</option>
+                            <option value="6-9km">6 - 9 km</option>
+                            <option value="9km+">Above 9 km</option>
+                        </select>
+                    </div>
+                </div>
 
-            <button type="submit" class="btn-royal w-100">Confirm & Register Student</button>
-        </form>
+                <h5 style="color:var(--primary); font-family:'Cinzel'; border-left: 5px solid var(--accent); padding-left: 10px; margin-bottom: 20px;">III. Guardian Information</h5>
+                <div class="form-grid mb-4">
+                    <div class="form-group">
+                        <label>Father's Name</label>
+                        <input type="text" id="sFather" placeholder="Mr. Name" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Mother's Name</label>
+                        <input type="text" id="sMother" placeholder="Mrs. Name" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Primary Mobile Number</label>
+                        <input type="tel" id="sMobile" placeholder="10 Digit Mobile" required oninput="this.value=this.value.slice(0,10)">
+                    </div>
+                    <div class="form-group">
+                        <label>Emergency WhatsApp</label>
+                        <input type="tel" id="sWa" placeholder="WhatsApp Number">
+                    </div>
+                </div>
+
+                <div class="form-group mb-4">
+                    <label>Full Residential Address</label>
+                    <textarea id="sAddress" rows="2" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ddd;" placeholder="Full Address with Landmark..."></textarea>
+                </div>
+
+                <button type="submit" class="btn-royal w-100" id="subBtn">
+                    <i class="fas fa-save"></i> REGISTER STUDENT & GENERATE ID
+                </button>
+            </form>
+        </div>
     </div>
 </div>
 
-<script src="menu.js"></script>
 <script>
-// --- Firebase Config & Logic ---
-const firebaseConfig = {
-  apiKey: "AIzaSyDqDmsMp2eAuHJBcjW-ciO2JcLTXapiIrs",
-  authDomain: "the-lalit-d7472.firebaseapp.com",
-  projectId: "the-lalit-d7472",
-  appId: "1:479237084229:web:31078825739b3c5712ff2c"
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+let compressedBase64 = "";
 
-let compressedPhoto = "";
-
-function previewImg(input) {
+function previewAndCompress(input) {
     if (input.files && input.files[0]) {
         let reader = new FileReader();
         reader.onload = function(e) {
@@ -130,31 +138,31 @@ function previewImg(input) {
             img.src = e.target.result;
             img.onload = function() {
                 let canvas = document.createElement('canvas');
-                canvas.width = 150; canvas.height = 180;
+                canvas.width = 150; canvas.height = 180; // Standard ID size
                 canvas.getContext('2d').drawImage(img, 0, 0, 150, 180);
-                compressedPhoto = canvas.toDataURL('image/jpeg', 0.7);
-                document.getElementById('imgPreview').src = compressedPhoto;
+                compressedBase64 = canvas.toDataURL('image/jpeg', 0.6); // 60% quality
+                document.getElementById('imgPreview').src = compressedBase64;
             }
         };
         reader.readAsDataURL(input.files[0]);
     }
 }
 
-function toggleTransport() {
-    document.getElementById('slabDiv').style.display = 
-        document.getElementById('sTransport').value === 'Yes' ? 'block' : 'none';
+function toggleTransportSlab(val) {
+    document.getElementById('slabDiv').style.display = (val === 'Yes') ? 'block' : 'none';
 }
 
 document.getElementById('admissionForm').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const submitBtn = e.target.querySelector('button');
-    submitBtn.innerText = "Processing Treasury...";
-    submitBtn.disabled = true;
+    const btn = document.getElementById('subBtn');
+    btn.innerText = "Synchronizing with Imperial Registry...";
+    btn.disabled = true;
 
     try {
-        // Generate Unique ID (Custom Logic)
+        // Auto-Generate Unique ID (Current Year + Serial)
+        const year = new Date().getFullYear();
         const lastSnap = await db.collection('students').orderBy('uniqueID', 'desc').limit(1).get();
-        const nextID = lastSnap.empty ? 2026001 : Number(lastSnap.docs[0].data().uniqueID) + 1;
+        const nextID = lastSnap.empty ? Number(year + "0001") : Number(lastSnap.docs[0].data().uniqueID) + 1;
 
         const studentData = {
             uniqueID: nextID,
@@ -169,20 +177,23 @@ document.getElementById('admissionForm').addEventListener('submit', async (e) =>
             slab: document.getElementById('sSlab').value,
             father: document.getElementById('sFather').value,
             mother: document.getElementById('sMother').value,
-            mobile: document.getElementById('sPhone').value,
+            mobile: document.getElementById('sMobile').value,
+            whatsapp: document.getElementById('sWa').value,
             address: document.getElementById('sAddress').value,
-            photo: compressedPhoto,
+            photo: compressedBase64,
             timestamp: Date.now()
         };
 
         await db.collection('students').doc(nextID.toString()).set(studentData);
-        alert("Success! Admission Completed. ID: " + nextID);
+        alert("🎉 Admission Successful! \nStudent Admission ID: " + nextID);
         location.reload();
     } catch (err) {
         alert("Error: " + err.message);
-        submitBtn.disabled = false;
+        btn.disabled = false;
+        btn.innerText = "Try Again";
     }
 });
 </script>
+
 </body>
 </html>
