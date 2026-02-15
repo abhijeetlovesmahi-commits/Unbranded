@@ -3,28 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registry Log | The Lalit Imperial</title>
+    <title>Registry | Imperial System</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore-compat.js"></script>
     <script src="init.js"></script>
-    <style>
-        .std-thumb {
-            width: 45px; height: 45px; border-radius: 50%; 
-            object-fit: cover; border: 2px solid var(--accent);
-        }
-        .facility-tag {
-            font-size: 0.65rem; padding: 2px 6px; border-radius: 10px;
-            margin-right: 3px; font-weight: bold;
-        }
-        .tag-hostel { background: #e3f2fd; color: #1976d2; }
-        .tag-bus { background: #fff3e0; color: #f57c00; }
-        .action-btn {
-            padding: 6px 10px; font-size: 0.8rem; border-radius: 5px;
-            cursor: pointer; transition: 0.2s; border: none; margin-right: 5px;
-        }
-    </style>
 </head>
 <body>
 
@@ -33,23 +17,20 @@
 
     <div class="main-content">
         <div class="royal-card">
-            <h2 class="card-title"><i class="fas fa-address-book"></i> Imperial Student Registry</h2>
-
-            <div class="form-grid mb-4 no-print" style="background: var(--bg-light); padding: 15px; border-radius: 10px;">
-                <div class="form-group">
-                    <label>Quick Search</label>
-                    <input type="text" id="regSearch" placeholder="Search Name, Father or ID..." oninput="instantFilter()">
-                </div>
+            <h2 class="card-title"><i class="fas fa-users"></i> Imperial Student Registry</h2>
+            
+            <div class="form-grid no-print" style="background:#f9f9f9; padding:15px; border-radius:10px; margin-bottom:20px;">
                 <div class="form-group">
                     <label>Filter by Class</label>
-                    <select id="regClass" onchange="loadRegistry()">
+                    <select id="fClass" onchange="loadRegistry()">
                         <option value="">All Classes</option>
-                        <option value="Nursery">Nursery</option><option value="LKG">LKG</option><option value="UKG">UKG</option>
-                        <script>for(let i=1; i<=12; i++) document.write(`<option value="${i}">${i}</option>`);</script>
+                        <option value="Nursery">Nursery</option>
+                        <script>for(let i=1; i<=12; i++) document.write(`<option value="${i}">Class ${i}</option>`);</script>
                     </select>
                 </div>
-                <div class="form-group" style="display:flex; align-items:flex-end; gap:10px;">
-                    <button class="btn-royal" onclick="window.print()"><i class="fas fa-print"></i> Print List</button>
+                <div class="form-group">
+                    <label>Search Name or ID</label>
+                    <input type="text" id="fSearch" placeholder="Type to filter..." oninput="searchLocal()">
                 </div>
             </div>
 
@@ -60,19 +41,15 @@
                             <th>ID</th>
                             <th>Photo</th>
                             <th>Student Details</th>
-                            <th>Guardian</th>
-                            <th>Class & Facilities</th>
-                            <th class="no-print">Quick Actions</th>
+                            <th>Father's Name</th>
+                            <th>Class</th>
+                            <th class="no-print">Actions</th>
                         </tr>
                     </thead>
                     <tbody id="registryBody">
-                        <tr><td colspan="6" style="text-align:center; padding:50px;">Accessing Imperial Records...</td></tr>
+                        <tr><td colspan="6" align="center">Connecting to New Database...</td></tr>
                     </tbody>
                 </table>
-            </div>
-            
-            <div id="regStats" style="margin-top:20px; font-weight:bold; color:var(--primary);">
-                Total Records Found: 0
             </div>
         </div>
     </div>
@@ -82,9 +59,8 @@
 let localData = [];
 
 async function loadRegistry() {
-    const cls = document.getElementById('regClass').value;
+    const cls = document.getElementById('fClass').value;
     let query = db.collection('students');
-    
     if(cls) query = query.where("class", "==", cls);
     
     const snap = await query.orderBy('uniqueID', 'asc').get();
@@ -93,7 +69,7 @@ async function loadRegistry() {
     tbody.innerHTML = "";
 
     if(snap.empty) {
-        tbody.innerHTML = "<tr><td colspan='6' align='center'>No students found in this category.</td></tr>";
+        tbody.innerHTML = "<tr><td colspan='6' align='center'>No records found in the new database.</td></tr>";
         return;
     }
 
@@ -103,43 +79,35 @@ async function loadRegistry() {
         tbody.innerHTML += `
             <tr id="row_${s.uniqueID}">
                 <td><b style="color:var(--primary)">${s.uniqueID}</b></td>
-                <td><img src="${s.photo || 'https://via.placeholder.com/50'}" class="std-thumb"></td>
+                <td><img src="${s.photo || 'https://via.placeholder.com/40'}" style="width:40px; height:40px; border-radius:50%; object-fit:cover; border:1px solid var(--accent);"></td>
                 <td align="left">
-                    <div style="font-weight:bold; color:var(--primary);">${s.name.toUpperCase()}</div>
-                    <div style="font-size:0.75rem; color:#666;"><i class="fas fa-phone"></i> ${s.mobile}</div>
+                    <b>${s.name.toUpperCase()}</b><br>
+                    <small><i class="fas fa-phone"></i> ${s.mobile}</small>
                 </td>
                 <td>${s.father}</td>
-                <td>
-                    <b>${s.class}-${s.section || 'A'}</b><br>
-                    ${s.hostel === 'Yes' ? '<span class="facility-tag tag-hostel">HOSTEL</span>' : ''}
-                    ${s.transport === 'Yes' ? '<span class="facility-tag tag-bus">BUS</span>' : ''}
-                </td>
+                <td>Class ${s.class}</td>
                 <td class="no-print">
-                    <button class="action-btn" style="background:#3498db; color:white;" onclick="location.href='id-card.html?id=${s.uniqueID}'" title="Generate ID"><i class="fas fa-id-card"></i></button>
-                    <button class="action-btn" style="background:#2ecc71; color:white;" onclick="location.href='profile.html?id=${s.uniqueID}'" title="Edit Profile"><i class="fas fa-edit"></i></button>
-                    <button class="action-btn" style="background:var(--danger); color:white;" onclick="deleteRecord('${s.uniqueID}')" title="Delete"><i class="fas fa-trash"></i></button>
+                    <button class="btn-royal" style="padding:5px 8px; font-size:0.7rem;" onclick="location.href='id-card.html?id=${s.uniqueID}'" title="Generate ID"><i class="fas fa-id-card"></i></button>
+                    <button class="btn-royal" style="padding:5px 8px; font-size:0.7rem; background:var(--success); border-color:var(--success);" onclick="location.href='profile.html?id=${s.uniqueID}'"><i class="fas fa-edit"></i></button>
+                    <button class="btn-royal" style="padding:5px 8px; font-size:0.7rem; background:var(--danger); border-color:var(--danger);" onclick="deleteStudent('${s.uniqueID}')"><i class="fas fa-trash"></i></button>
                 </td>
             </tr>`;
     });
-    document.getElementById('regStats').innerText = "Total Records Found: " + localData.length;
 }
 
-function instantFilter() {
-    const term = document.getElementById('regSearch').value.toLowerCase();
+function searchLocal() {
+    const term = document.getElementById('fSearch').value.toLowerCase();
     localData.forEach(s => {
         const row = document.getElementById(`row_${s.uniqueID}`);
-        const text = (s.name + s.father + s.uniqueID).toLowerCase();
+        const text = (s.name + s.uniqueID).toLowerCase();
         row.style.display = text.includes(term) ? "" : "none";
     });
 }
 
-async function deleteRecord(id) {
-    if(confirm("DANGER: Are you sure you want to permanently erase student " + id + " from the registry?")) {
-        try {
-            await db.collection('students').doc(id.toString()).delete();
-            document.getElementById(`row_${id}`).remove();
-            alert("Record successfully erased.");
-        } catch (e) { alert(e.message); }
+async function deleteStudent(id) {
+    if(confirm("Erase this record permanently?")) {
+        await db.collection('students').doc(id).delete();
+        document.getElementById(`row_${id}`).remove();
     }
 }
 
