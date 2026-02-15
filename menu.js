@@ -1,48 +1,33 @@
-// BRANDING CONFIGURATION
-const SCHOOL_CONFIG = {
-    name: "THE LALIT INTERNATIONAL",
-    logo: "logo.png",
-    session: "2025-26"
-};
-
-function initMenu() {
-    // 1. Get User Role from localStorage (set after login)
-    const userRole = localStorage.getItem('userRole') || 'guest'; // admin, account, faculty, student
-
-    const menuData = [
-        { name: "Dashboard", icon: "fa-th-large", link: "index.html", roles: ['admin', 'account', 'faculty', 'student'] },
-        { name: "Admission", icon: "fa-user-plus", link: "add-student.html", roles: ['admin'] },
-        { name: "Registry", icon: "fa-users", link: "view-students.html", roles: ['admin', 'faculty'] },
-        { name: "Fee Controller", icon: "fa-cog", link: "fee-master.html", roles: ['admin', 'account'] },
-        { name: "Collect Fees", icon: "fa-money-bill-wave", link: "collect-fees.html", roles: ['account', 'admin'] },
-        { name: "Marks Entry", icon: "fa-edit", link: "marks-entry.html", roles: ['faculty', 'admin'] },
-        { name: "Attendance", icon: "fa-calendar-check", link: "attendance.html", roles: ['faculty', 'admin'] },
-        { name: "My Profile", icon: "fa-user-graduate", link: "profile.html", roles: ['student'] },
-        { name: "Logout", icon: "fa-sign-out-alt", link: "login.html", roles: ['admin', 'account', 'faculty', 'student'] }
-    ];
-
-    let sidebarHTML = `
-        <div class="sidebar" id="sidebar">
-            <div class="sidebar-header" style="text-align:center; padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.1)">
-                <img src="${SCHOOL_CONFIG.logo}" style="width: 80px; background:white; border-radius:50%; padding:5px; border: 2px solid var(--accent-color);">
-                <h5 style="color:var(--accent-color); font-family:'Cinzel'; margin-top:10px; font-size:1rem;">${SCHOOL_CONFIG.name}</h5>
-            </div>
-            <nav class="nav-links">
-    `;
-
-    menuData.forEach(item => {
-        if (item.roles.includes(userRole)) {
-            sidebarHTML += `<a href="${item.link}" style="color:white; text-decoration:none; padding:15px 25px; display:flex; align-items:center; transition:0.3s; border-bottom:1px solid rgba(255,255,255,0.05);">
-                <i class="fas ${item.icon}" style="margin-right:15px; width:20px; color:var(--accent-color);"></i>
-                ${item.name}
-            </a>`;
-        }
-    });
-
-    sidebarHTML += `</nav></div>`;
+document.addEventListener('DOMContentLoaded', () => {
+    const sidebar = document.createElement('div');
+    sidebar.className = 'sidebar no-print';
     
-    document.body.insertAdjacentHTML('afterbegin', sidebarHTML);
-}
-
-// Sidebar Hover Effect (CSS alternative)
-document.addEventListener('DOMContentLoaded', initMenu);
+    // Sidebar Content with Role-based Access
+    sidebar.innerHTML = `
+        <div class="sidebar-header">
+            <img src="logo.png" style="width:60px; background:#fff; border-radius:50%; padding:5px; border:2px solid var(--accent);">
+            <h2>IMPERIAL SYSTEM</h2>
+        </div>
+        <ul class="sidebar-menu">
+            <li><a href="index.html"><i class="fas fa-home"></i> <span>Dashboard</span></a></li>
+            <li><a href="add-student.html"><i class="fas fa-user-plus"></i> <span>Admission</span></a></li>
+            <li><a href="view-students.html"><i class="fas fa-users"></i> <span>Registry</span></a></li>
+            <li><a href="fee-master.html"><i class="fas fa-cog"></i> <span>Fee Master</span></a></li>
+            <li><a href="collect-fees.html"><i class="fas fa-money-bill-wave"></i> <span>Collect Fees</span></a></li>
+            <li><a href="attendance.html"><i class="fas fa-calendar-check"></i> <span>Attendance</span></a></li>
+            <li><a href="exam-master.html"><i class="fas fa-file-signature"></i> <span>Exam Master</span></a></li>
+            <li><a href="marks-entry.html"><i class="fas fa-edit"></i> <span>Marks Entry</span></a></li>
+            <li><a href="report-card.html"><i class="fas fa-print"></i> <span>Report Card</span></a></li>
+            <li><a href="id-card.html"><i class="fas fa-id-card"></i> <span>ID Card</span></a></li>
+            <li style="margin-top:30px;"><a href="login.html" onclick="localStorage.clear()"><i class="fas fa-sign-out-alt"></i> <span>Logout</span></a></li>
+        </ul>
+    `;
+    
+    // Inject into the wrapper
+    const wrapper = document.querySelector('.wrapper');
+    if(wrapper) {
+        wrapper.insertBefore(sidebar, wrapper.firstChild);
+    } else {
+        document.body.insertAdjacentElement('afterbegin', sidebar);
+    }
+});
