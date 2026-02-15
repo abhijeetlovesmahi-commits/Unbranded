@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marks Entry | The Lalit</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore-compat.js"></script>
+    <style>
+        .marks-input {
+            width: 70px; padding: 5px; text-align: center;
+            border: 1px solid #ddd; border-bottom: 2px solid var(--accent-color);
+            font-weight: bold;
+        }
+        .marks-input:focus { background: var(--bg-light); outline: none; }
+        .max-label { font-size: 0.65rem; color: #888; display: block; }
+        .subject-header { background: var(--primary-color) !important; color: var(--accent-color) !important; font-size: 0.75rem; }
+    </style>
+</head>
+<body>
+
+<div class="main-content">
+    <div class="royal-card">
+        <h2 class="card-title"><i class="fas fa-edit"></i> Academic Marks Entry</h2>
+
+        <div class="form-section no-print">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Select Class</label>
+                    <select id="mClass" onchange="loadExamsForClass()">
+                        <option value="">-- Choose Class --</option>
+                        <script>for(let i=1; i<=12; i++) document.write(`<option value="${i}">Class ${i}</option>`);</script>
+                        <option value="Nursery">Nursery</option><option value="LKG">LKG</option><option value="UKG">UKG</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Select Exam</label>
+                    <select id="mExam">
+                        <option value="">-- Select Exam --</option>
+                    </select>
+                </div>
+                <div class="form-group" style="display:flex; align-items:flex-end;">
+                    <button class="btn-royal" onclick="generateMarksheet()"><i class="fas fa-sync"></i> Load Marksheet</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="marksArea" style="display:none; margin-top:30px;">
+            <div class="table-responsive">
+                <table id="marksTable">
+                    <thead id="marksHead">
+                        </thead>
+                    <tbody id="marksBody">
+                        </tbody>
+                </table>
+            </div>
+            <button class="btn-royal w-100 mt-4" onclick="saveAllMarks()"><i class="fas fa-cloud-upload-alt"></i> Final Submit & Lock Marks</button>
+        </div>
+    </div>
+</div>
+
+<script src="menu.js"></script>
+<script>
+// --- Firebase Refined Config ---
+const firebaseConfig = {
+  apiKey: "AIzaSyDqDmsMp2eAuHJBcjW-ciO2JcLTXapiIrs",
+  authDomain: "the-lalit-d7472.firebaseapp.com",
+  projectId: "the-lalit-d7472",
+  appId: "1:479237084229:web:31078825739b3c5712ff2c"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+let activeExamConfig = null;
+let studentsList = [];
+
+// 1. Load Exams based on Class
+async function loadExamsForClass() {
+    const cls = document.getElementById('mClass').value;
+    const examSelect = document.getElementById('mExam');
+    examSelect.innerHTML = '<option value="">Loading...</option>';
+    
+    const snap = await db.collection('exam_settings').where("targetClass", "==", cls).get();
+    examSelect.innerHTML = '<option value="">-- Select Exam --</option>';
+    snap.forEach(doc => {
+        examSelect.innerHTML += `<option value="${doc.id}">${doc.data().examName}</option>`;
+    });
+}
+
+// 2. Generate the Dynamic Table
+async function generateMarksheet() {
+    const examID = document.getElementById('mExam').value;
+    const cls = document.getElementById('mClass').value;
+
+    if(!examID) return alert("Please select an exam!");
+
+    // Fetch Exam Config
+    const exDoc = await db.collection('exam_settings').doc(examID).get();
+    activeExamConfig = exDoc.data();
+
+    // Fetch Students
+    const stdSnap = await db.collection('students').where("class", "==", cls).get();
+    studentsList = [];
+    stdSnap.forEach(doc => studentsList.push(doc.data()));
+    studentsList.sort((a,b) => a.uniqueID - b.uniqueID);
+
+    // Build Header
+    let headHTML = `<tr><th rowspan="2">Roll No</th><th rowspan="2">Student Name</th>`;
+    let subHeaderHTML = `<tr>`;
+    
+    activeExamConfig.subjects.forEach(sub => {
+        headHTML += `<th colspan="2" class="subject-header">${sub.name}</th>`;
+        subHeaderHTML += `<th class="subject-header"><span class="max-label">Theory (${sub.maxTheory})</span></th>
+                          <th class="subject-header"><span class="max-label">Prac (${sub.maxPrac})</span></th>`;
+    });
+    headHTML += `</tr>` + subHeaderHTML + `</tr>`;
+    document.getElementById('marksHead').innerHTML = headHTML;
+
+    // Build Rows
+    let bodyHTML = "";
+    studentsList.forEach(s => {
+        bodyHTML += `<tr>
+            <td>${s.uniqueID.toString().slice(-3)}</td>
+            <td style="text-align:left;"><b>${s.name}</b></td>`;
+        
+        activeExamConfig.subjects.forEach(sub => {
+            bodyHTML += `
+                <td><input type="number" class="marks-input" data-sid="${s.uniqueID}" data-sub="${sub.name}" data-type="theory" max="${sub.maxTheory}"></td>
+                <td><input type="number" class="marks-input" data-sid="${s.uniqueID}" data-sub="${sub.name}" data-type="prac" max="${sub.maxPrac}"></td>`;
+        });
+        bodyHTML += `</tr>`;
+    });
+    document.getElementById('marksBody').innerHTML = bodyHTML;
+    document.getElementById('marksArea').style.display = 'block';
+    
+    loadExistingMarks(); // Load if already filled
+}
+
+async function saveAllMarks() {
+    const batch = db.batch();
+    const examID = document.getElementById('mExam').value;
+    const inputs = document.querySelectorAll('.marks-input');
+    
+    inputs.forEach(input => {
+        const sid = input.getAttribute('data-sid');
+        const sub = input.getAttribute('data-sub');
+        const type = input.getAttribute('data-type');
+        const val = input.value || 0;
+
+        // Doc ID: StudentID_ExamID_Subject
+        const docRef = db.collection('marks_entry').doc(`${sid}_${examID}_${sub}`);
+        batch.set(docRef, {
+            studentID: Number(sid),
+            examID: examID,
+            subject: sub,
+            [type]: Number(val),
+            timestamp: Date.now()
+        }, { merge: true });
+    });
+
+    try {
+        await batch.commit();
+        alert("All Marks Successfully Locked in Registry!");
+    } catch (e) { alert(e.message); }
+}
+
+async function loadExistingMarks() {
+    const examID = document.getElementById('mExam').value;
+    const snap = await db.collection('marks_entry').where("examID", "==", examID).get();
+    
+    snap.forEach(doc => {
+        const d = doc.data();
+        const tInput = document.querySelector(`input[data-sid="${d.studentID}"][data-sub="${d.subject}"][data-type="theory"]`);
+        const pInput = document.querySelector(`input[data-sid="${d.studentID}"][data-sub="${d.subject}"][data-type="prac"]`);
+        if(tInput) tInput.value = d.theory;
+        if(pInput) pInput.value = d.prac;
+    });
+}
+</script>
+</body>
+</html>
